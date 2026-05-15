@@ -6,6 +6,7 @@ from utils.data_loader import DataLoader
 from utils.train_utils import train_one_epoch, validate, EarlyStopping, save_model
 from utils.logger import setup_logger
 from utils.visualization import plot_loss
+import pandas as pd
 
 def run_training(dataset_name, model_type):
     config = Config()
@@ -49,5 +50,5 @@ def run_training(dataset_name, model_type):
     plot_loss(train_losses, val_losses, f"results/plots/{dataset_name}_{model_type}_loss.png")
 
 if __name__ == "__main__":
-    import pandas as pd
-    run_training("SKAB", "LSTM")
+    for m in ["LSTM", "CNN"]:
+        run_training("SKAB", m)
