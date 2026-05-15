@@ -40,5 +40,12 @@ class DataLoader:
             return data['anomaly'].values
         return None
 
-    def split_data(self, data):
-        pass
+    def split_chronological(self, data):
+        n = len(data)
+        train_end = int(n * self.config.TRAIN_RATIO)
+        val_end = train_end + int(n * self.config.VAL_RATIO)
+        
+        train = data.iloc[:train_end]
+        val = data.iloc[train_end:val_end]
+        test = data.iloc[val_end:]
+        return train, val, test
