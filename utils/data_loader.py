@@ -1,10 +1,28 @@
 import pandas as pd
 import numpy as np
 import os
+import torch
+from torch.utils.data import Dataset, DataLoader as TorchDataLoader
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.model_selection import GroupKFold
 from configs.config import Config
+
+class TimeSeriesDataset(Dataset):
+    def __init__(self, data, window_size, labels=None):
+        self.data = torch.tensor(data, dtype=torch.float32)
+        self.window_size = window_size
+        self.labels = torch.tensor(labels, dtype=torch.float32) if labels is not None else None
+
+    def __len__(self):
+        return len(self.data) - self.window_size
+
+    def __getitem__(self, idx):
+        x = self.data[idx : idx + self.window_size]
+        if self.labels is not None:
+            y = self.labels[idx + self.window_size]
+            return x, y
+        return x
 
 class DataLoader:
     def __init__(self, dataset_name):
