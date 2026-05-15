@@ -21,6 +21,10 @@ class DataLoader:
             data_list.append(df)
         return pd.concat(data_list)
 
+    def load_batadal(self, path):
+        df = pd.read_csv(path, index_col='DATETIME', parse_dates=True)
+        return df
+
     def preprocess(self, data):
         pass
 
