@@ -46,6 +46,17 @@ def validate(model, dataloader, criterion, device):
             total_loss += loss.item()
     return total_loss / len(dataloader)
 
+def predict(model, dataloader, device):
+    model.eval()
+    preds = []
+    with torch.no_grad():
+        for x in dataloader:
+            if isinstance(x, list): x = x[0]
+            x = x.to(device)
+            output = model(x)
+            preds.extend(output.cpu().numpy())
+    return np.array(preds)
+
 def save_model(model, path):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     torch.save(model.state_dict(), path)
