@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+import os
 
 class EarlyStopping:
     def __init__(self, patience=5, delta=0):
@@ -44,3 +45,11 @@ def validate(model, dataloader, criterion, device):
             loss = criterion(output, y)
             total_loss += loss.item()
     return total_loss / len(dataloader)
+
+def save_model(model, path):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    torch.save(model.state_dict(), path)
+
+def load_model(model, path, device):
+    model.load_state_dict(torch.load(path, map_location=device))
+    return model
