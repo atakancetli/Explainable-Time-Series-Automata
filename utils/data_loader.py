@@ -69,6 +69,17 @@ class DataLoader:
         test = data.iloc[val_end:]
         return train, val, test
 
+    def get_dataloaders(self, train_data, val_data, test_data, train_labels, val_labels, test_labels):
+        train_ds = TimeSeriesDataset(train_data, self.config.WINDOW_SIZE, train_labels)
+        val_ds = TimeSeriesDataset(val_data, self.config.WINDOW_SIZE, val_labels)
+        test_ds = TimeSeriesDataset(test_data, self.config.WINDOW_SIZE, test_labels)
+        
+        train_loader = TorchDataLoader(train_ds, batch_size=self.config.BATCH_SIZE, shuffle=True)
+        val_loader = TorchDataLoader(val_ds, batch_size=self.config.BATCH_SIZE, shuffle=False)
+        test_loader = TorchDataLoader(test_ds, batch_size=self.config.BATCH_SIZE, shuffle=False)
+        
+        return train_loader, val_loader, test_loader
+
     def split_by_group(self, data, n_splits=5):
         gkf = GroupKFold(n_splits=n_splits)
         groups = data['source_file']
