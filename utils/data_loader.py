@@ -3,6 +3,7 @@ import numpy as np
 import os
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
+from sklearn.model_selection import GroupKFold
 from configs.config import Config
 
 class DataLoader:
@@ -49,3 +50,14 @@ class DataLoader:
         val = data.iloc[train_end:val_end]
         test = data.iloc[val_end:]
         return train, val, test
+
+    def split_by_group(self, data, n_splits=5):
+        gkf = GroupKFold(n_splits=n_splits)
+        groups = data['source_file']
+        features = data.drop(['anomaly', 'changepoint', 'source_file'], axis=1, errors='ignore')
+        labels = data['anomaly']
+        
+        splits = []
+        for train_idx, test_idx in gkf.split(features, labels, groups=groups):
+            splits.append((train_idx, test_idx))
+        return splits
