@@ -35,5 +35,10 @@ class DataLoader:
         pc1 = self.pca.fit_transform(scaled_data)
         return scaled_data, pc1
 
+    def get_labels(self, data):
+        if 'anomaly' in data.columns:
+            return data['anomaly'].values
+        return None
+
     def split_data(self, data):
         pass
