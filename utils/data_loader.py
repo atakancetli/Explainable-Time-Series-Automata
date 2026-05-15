@@ -25,8 +25,15 @@ class DataLoader:
         df = pd.read_csv(path, index_col='DATETIME', parse_dates=True)
         return df
 
-    def preprocess(self, data):
-        pass
+    def preprocess(self, data, fit_scaler=True):
+        features = data.drop(['anomaly', 'changepoint', 'source_file'], axis=1, errors='ignore')
+        if fit_scaler:
+            scaled_data = self.scaler.fit_transform(features)
+        else:
+            scaled_data = self.scaler.transform(features)
+        
+        pc1 = self.pca.fit_transform(scaled_data)
+        return scaled_data, pc1
 
     def split_data(self, data):
         pass
