@@ -44,13 +44,54 @@ class DataLoader:
 
 
     def load_skab(self, path):
-        all_files = [os.path.join(path, f) for f in os.listdir(path) if f.endswith('.csv')]
+        subdirs = ['valve1', 'valve2']
         data_list = []
-        for f in all_files:
-            df = pd.read_csv(f, sep=';', index_col='datetime', parse_dates=True)
-            df['source_file'] = os.path.basename(f)
-            data_list.append(df)
-        return pd.concat(data_list)
+        
+        self.logger.info(f"Scanning SKAB path: {path}")
+        
+        # Flag to check if we loaded any data
+        loaded_from_subdirs = False
+        
+        for subdir in subdirs:
+            subdir_path = os.path.join(path, subdir)
+            if os.path.exists(subdir_path) and os.path.isdir(subdir_path):
+                self.logger.info(f"Loading data from subdirectory: {subdir}")
+                all_files = [os.path.join(subdir_path, f) for f in os.listdir(subdir_path) if f.endswith('.csv')]
+                for f in all_files:
+                    try:
+                        df = pd.read_csv(f, sep=';', index_col='datetime', parse_dates=True)
+                        df['source_group'] = subdir
+                        df['source_file'] = os.path.basename(f)
+                        data_list.append(df)
+                        self.logger.info(f"Loaded {os.path.basename(f)}: shape {df.shape}")
+                        loaded_from_subdirs = True
+                    except Exception as e:
+                        self.logger.error(f"Error loading {f}: {e}")
+            else:
+                self.logger.warning(f"Subdirectory not found: {subdir_path}")
+                
+        # Fallback: if no subdirs found or empty, search directly in the main path
+        if not loaded_from_subdirs:
+            self.logger.info(f"Attempting fallback to scan files directly in root SKAB path: {path}")
+            if os.path.exists(path):
+                all_files = [os.path.join(path, f) for f in os.listdir(path) if f.endswith('.csv')]
+                for f in all_files:
+                    try:
+                        df = pd.read_csv(f, sep=';', index_col='datetime', parse_dates=True)
+                        df['source_group'] = 'root'
+                        df['source_file'] = os.path.basename(f)
+                        data_list.append(df)
+                        self.logger.info(f"Loaded fallback file {os.path.basename(f)}: shape {df.shape}")
+                    except Exception as e:
+                        self.logger.error(f"Error loading fallback file {f}: {e}")
+                    
+        if not data_list:
+            raise FileNotFoundError(f"No SKAB CSV files found under {path} or its subdirectories.")
+            
+        combined_df = pd.concat(data_list)
+        self.logger.info(f"Successfully concatenated SKAB dataset. Combined shape: {combined_df.shape}")
+        return combined_df
+
 
     def load_batadal(self, path):
         df = pd.read_csv(path, index_col='DATETIME', parse_dates=True)
