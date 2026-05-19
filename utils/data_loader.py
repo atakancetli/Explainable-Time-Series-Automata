@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import os
+import logging
 import torch
 from torch.utils.data import Dataset, DataLoader as TorchDataLoader
 from sklearn.preprocessing import StandardScaler
@@ -23,8 +24,6 @@ class TimeSeriesDataset(Dataset):
             y = self.labels[idx + self.window_size]
             return x, y
         return x
-
-import logging
 
 class DataLoader:
     def __init__(self, dataset_name):
