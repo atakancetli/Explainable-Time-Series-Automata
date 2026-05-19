@@ -28,3 +28,47 @@ class TimeSeriesAutomata:
         self.word_size = word_size
         
         logger.info(f"Initialized TimeSeriesAutomata with alphabet_size={alphabet_size}, word_size={word_size}")
+
+    def paa_transform(self, x):
+        """
+        Applies Piecewise Aggregate Approximation (PAA) to a time series.
+        Reduces dimensionality from N to word_size (w) using fractional overlap.
+
+        Parameters:
+        -----------
+        x : array-like of shape (N,) or (N, D)
+            The input time series signal.
+
+        Returns:
+        --------
+        paa_coeffs : np.ndarray of shape (w,) or (w, D)
+            The PAA coefficients.
+        """
+        x_arr = np.asarray(x, dtype=float)
+        n = x_arr.shape[0]
+        w = self.word_size
+
+        if n < w:
+            raise ValueError(f"Time series length N={n} is less than word_size w={w}. Cannot reduce.")
+
+        is_1d = (x_arr.ndim == 1)
+        if is_1d:
+            x_arr = x_arr[:, np.newaxis]
+
+        n, d = x_arr.shape
+        paa_coeffs = np.zeros((w, d))
+
+        for i in range(w):
+            start = i * n / w
+            end = (i + 1) * n / w
+            
+            j_indices = np.arange(n)
+            starts = np.maximum(j_indices, start)
+            ends = np.minimum(j_indices + 1, end)
+            overlaps = np.maximum(0.0, ends - starts)
+            
+            paa_coeffs[i] = np.sum(x_arr * overlaps[:, np.newaxis], axis=0) / (n / w)
+
+        if is_1d:
+            return paa_coeffs.squeeze(axis=1)
+        return paa_coeffs
