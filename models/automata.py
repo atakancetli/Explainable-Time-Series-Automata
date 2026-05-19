@@ -85,3 +85,35 @@ class TimeSeriesAutomata:
         probabilities = np.linspace(1 / self.alphabet_size, 1 - 1 / self.alphabet_size, self.alphabet_size - 1)
         breakpoints = norm.ppf(probabilities)
         return breakpoints
+
+    def sax_transform(self, paa_coeffs):
+        """
+        Converts PAA coefficients into SAX symbolic representations.
+
+        Parameters:
+        -----------
+        paa_coeffs : array-like of shape (w,) or (w, D)
+            The Piecewise Aggregate Approximation coefficients.
+
+        Returns:
+        --------
+        sax_sequence : str or list of str
+            A single symbolic string if input is 1D, or a list of strings (one per dimension) if 2D.
+        """
+        paa_arr = np.asarray(paa_coeffs, dtype=float)
+        is_1d = (paa_arr.ndim == 1)
+        if is_1d:
+            paa_arr = paa_arr[:, np.newaxis]
+
+        w, d = paa_arr.shape
+        breakpoints = self.get_breakpoints()
+        
+        sax_sequences = []
+        for col in range(d):
+            indices = np.digitize(paa_arr[:, col], breakpoints)
+            symbols = [chr(97 + idx) for idx in indices]
+            sax_sequences.append("".join(symbols))
+
+        if is_1d:
+            return sax_sequences[0]
+        return sax_sequences
