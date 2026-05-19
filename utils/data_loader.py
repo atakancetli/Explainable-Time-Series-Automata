@@ -133,8 +133,24 @@ class DataLoader:
 
 
     def _get_features(self, data):
-        drop_cols = ['anomaly', 'changepoint', 'source_group', 'source_file', 'datetime']
-        return data.drop(columns=[col for col in drop_cols if col in data.columns], errors='ignore')
+        # 1. Standard exclusion list
+        drop_cols = ['anomaly', 'changepoint', 'source_group', 'source_file', 'datetime', 'DATETIME', 'ATT_FLAG']
+        features = data.drop(columns=[col for col in drop_cols if col in data.columns], errors='ignore')
+        
+        # 2. Exclude any datetime indices or columns that have date/time in their name
+        time_related_cols = [col for col in features.columns if 'time' in col.lower() or 'date' in col.lower() or 'day' in col.lower()]
+        if time_related_cols:
+            self.logger.info(f"Automatically excluding time-related feature columns: {time_related_cols}")
+            features = features.drop(columns=time_related_cols)
+            
+        # 3. Exclude non-numeric object/categorical columns just in case
+        non_numeric_cols = features.select_dtypes(exclude=[np.number]).columns.tolist()
+        if non_numeric_cols:
+            self.logger.info(f"Automatically excluding non-numeric feature columns: {non_numeric_cols}")
+            features = features.drop(columns=non_numeric_cols)
+            
+        return features
+
 
     def fit(self, train_data):
         self.logger.info("Fitting StandardScaler and PCA on training data to prevent data leakage...")
