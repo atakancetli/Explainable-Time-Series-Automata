@@ -9,6 +9,11 @@ class TimeSeriesAutomata:
     Symbolic Time Series Automata classifier core.
     Implements Piecewise Aggregate Approximation (PAA) and Symbolic Aggregate Approximation (SAX)
     with dynamic Gaussian breakpoints for time-series discretization and sequence analysis.
+    
+    Mathematical details:
+      1. PAA: Reduces dimensionality from N to w using fractional overlap bin averages.
+      2. SAX: Discretizes PAA coefficients into symbolic sequences ('a', 'b', 'c', ...)
+         based on equiprobable regions separated by standard normal (Gaussian) breakpoints.
     """
     def __init__(self, alphabet_size=5, word_size=10):
         """
