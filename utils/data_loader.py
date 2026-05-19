@@ -93,8 +93,14 @@ class DataLoader:
 
 
     def load_batadal(self, path):
+        self.logger.info(f"Initiating BATADAL dataset load sequence from path: {path}")
+        if not os.path.exists(path):
+            self.logger.error(f"BATADAL dataset path does not exist: {path}")
+        # Initialize parser skeleton
         df = pd.read_csv(path, index_col='DATETIME', parse_dates=True)
+        self.logger.info(f"Loaded raw BATADAL data. Shape: {df.shape}")
         return df
+
 
     def _get_features(self, data):
         drop_cols = ['anomaly', 'changepoint', 'source_group', 'source_file', 'datetime']
