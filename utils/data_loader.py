@@ -26,6 +26,14 @@ class TimeSeriesDataset(Dataset):
         return x
 
 class DataLoader:
+    """
+    DataLoader handles dataset retrieval, formatting, and preprocessing pipelines
+    for the SKAB and BATADAL time-series anomaly detection datasets.
+    
+    It incorporates strict data-leakage prevention strategies by dividing
+    normalization and PCA fitting to the training fold only, as well as providing
+    advanced stratified group K-fold cross-validation based on source files.
+    """
     def __init__(self, dataset_name):
         self.dataset_name = dataset_name
         self.config = Config()
