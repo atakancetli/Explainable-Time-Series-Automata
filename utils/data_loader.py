@@ -162,6 +162,22 @@ class DataLoader:
         return None
 
     def split_chronological(self, data):
+        self.logger.info("Executing chronological split of the dataset...")
+        
+        # Verify split ratios
+        ratios_sum = self.config.TRAIN_RATIO + self.config.VAL_RATIO + self.config.TEST_RATIO
+        if abs(ratios_sum - 1.0) > 1e-5:
+            raise ValueError(f"Train/Val/Test split ratios must sum to 1.0. Current ratios: Train={self.config.TRAIN_RATIO}, Val={self.config.VAL_RATIO}, Test={self.config.TEST_RATIO}")
+            
+        # Verify index chronological ordering
+        if isinstance(data.index, pd.DatetimeIndex):
+            is_sorted = data.index.is_monotonic_increasing
+            if not is_sorted:
+                self.logger.warning("Dataset index is NOT chronologically sorted! Sorting it now to preserve temporal order.")
+                data = data.sort_index()
+            else:
+                self.logger.info("Dataset index is confirmed to be chronologically sorted.")
+                
         n = len(data)
         train_end = int(n * self.config.TRAIN_RATIO)
         val_end = train_end + int(n * self.config.VAL_RATIO)
@@ -169,7 +185,10 @@ class DataLoader:
         train = data.iloc[:train_end]
         val = data.iloc[train_end:val_end]
         test = data.iloc[val_end:]
+        
+        self.logger.info(f"Chronological split complete: Train={train.shape[0]} ({self.config.TRAIN_RATIO*100:.0f}%), Val={val.shape[0]} ({self.config.VAL_RATIO*100:.0f}%), Test={test.shape[0]} ({self.config.TEST_RATIO*100:.0f}%)")
         return train, val, test
+
 
     def get_dataloaders(self, train_data, val_data, test_data, train_labels, val_labels, test_labels):
         train_ds = TimeSeriesDataset(train_data, self.config.WINDOW_SIZE, train_labels)
