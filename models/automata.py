@@ -72,3 +72,16 @@ class TimeSeriesAutomata:
         if is_1d:
             return paa_coeffs.squeeze(axis=1)
         return paa_coeffs
+
+    def get_breakpoints(self):
+        """
+        Dynamically computes equiprobable Gaussian breakpoints based on the alphabet size.
+
+        Returns:
+        --------
+        breakpoints : np.ndarray of shape (alphabet_size - 1,)
+            The Gaussian breakpoints separating the probability regions.
+        """
+        probabilities = np.linspace(1 / self.alphabet_size, 1 - 1 / self.alphabet_size, self.alphabet_size - 1)
+        breakpoints = norm.ppf(probabilities)
+        return breakpoints
