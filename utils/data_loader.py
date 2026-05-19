@@ -93,13 +93,43 @@ class DataLoader:
 
 
     def load_batadal(self, path):
-        self.logger.info(f"Initiating BATADAL dataset load sequence from path: {path}")
+        self.logger.info(f"Loading BATADAL dataset from {path}")
         if not os.path.exists(path):
-            self.logger.error(f"BATADAL dataset path does not exist: {path}")
-        # Initialize parser skeleton
-        df = pd.read_csv(path, index_col='DATETIME', parse_dates=True)
-        self.logger.info(f"Loaded raw BATADAL data. Shape: {df.shape}")
+            self.logger.warning(f"BATADAL dataset path not found at: {path}")
+            raise FileNotFoundError(f"BATADAL dataset file not found at {path}")
+            
+        # Load CSV (flexible separator)
+        df = pd.read_csv(path, sep=None, engine='python')
+        self.logger.info(f"Loaded raw file. Initial shape: {df.shape}")
+        
+        # 1. Datetime index resolution
+        dt_cols = [c for c in df.columns if 'time' in c.lower() or 'date' in c.lower()]
+        if dt_cols:
+            self.logger.info(f"Setting index to datetime column: {dt_cols[0]}")
+            df[dt_cols[0]] = pd.to_datetime(df[dt_cols[0]], errors='coerce')
+            df.set_index(dt_cols[0], inplace=True)
+            df.index.name = 'datetime'
+        else:
+            self.logger.warning("No datetime column found. Ensuring index is standard range index.")
+            
+        # 2. Target label mapping
+        label_cols = [c for c in df.columns if c in ['ATT_FLAG', 'anomaly', 'label', 'Label', 'class'] or 'attack' in c.lower() or 'flag' in c.lower()]
+        if label_cols:
+            self.logger.info(f"Mapping column '{label_cols[0]}' to standard target label 'anomaly'")
+            df['anomaly'] = df[label_cols[0]].astype(int)
+            # Remove original if renamed
+            if label_cols[0] != 'anomaly':
+                df.drop(columns=[label_cols[0]], inplace=True)
+        else:
+            self.logger.warning("No standard BATADAL attack flag/anomaly label column found. Initializing default 'anomaly' column to 0.")
+            df['anomaly'] = 0
+            
+        # Clean whitespaces in column names if any
+        df.columns = [c.strip() for c in df.columns]
+        
+        self.logger.info(f"Successfully processed BATADAL dataset. Final shape: {df.shape}")
         return df
+
 
 
     def _get_features(self, data):
