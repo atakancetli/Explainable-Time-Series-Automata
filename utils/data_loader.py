@@ -5,7 +5,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader as TorchDataLoader
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
-from sklearn.model_selection import GroupKFold
+from sklearn.model_selection import GroupKFold, StratifiedGroupKFold
 from configs.config import Config
 
 class TimeSeriesDataset(Dataset):
@@ -147,13 +147,25 @@ class DataLoader:
         
         return train_loader, val_loader, test_loader
 
-    def split_by_group(self, data, n_splits=5):
-        gkf = GroupKFold(n_splits=n_splits)
+    def split_by_group(self, data, n_splits=5, stratified=True):
+        self.logger.info(f"Splitting data using {'StratifiedGroupKFold' if stratified else 'GroupKFold'} with {n_splits} splits.")
+        if stratified:
+            try:
+                gkf = StratifiedGroupKFold(n_splits=n_splits)
+            except Exception as e:
+                self.logger.warning(f"Error initializing StratifiedGroupKFold: {e}. Falling back to GroupKFold.")
+                gkf = GroupKFold(n_splits=n_splits)
+        else:
+            gkf = GroupKFold(n_splits=n_splits)
+            
         groups = data['source_file']
-        features = data.drop(['anomaly', 'changepoint', 'source_file'], axis=1, errors='ignore')
-        labels = data['anomaly']
+        features = self._get_features(data)
+        labels = data['anomaly'] if 'anomaly' in data.columns else np.zeros(len(data))
         
         splits = []
         for train_idx, test_idx in gkf.split(features, labels, groups=groups):
             splits.append((train_idx, test_idx))
+            
+        self.logger.info(f"Data split completed. Generated {len(splits)} folds.")
         return splits
+
