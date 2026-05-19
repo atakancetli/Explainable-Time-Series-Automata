@@ -97,15 +97,29 @@ class DataLoader:
         df = pd.read_csv(path, index_col='DATETIME', parse_dates=True)
         return df
 
-    def preprocess(self, data, fit_scaler=True):
-        features = data.drop(['anomaly', 'changepoint', 'source_file'], axis=1, errors='ignore')
-        if fit_scaler:
-            scaled_data = self.scaler.fit_transform(features)
-        else:
-            scaled_data = self.scaler.transform(features)
-        
-        pc1 = self.pca.fit_transform(scaled_data)
+    def _get_features(self, data):
+        drop_cols = ['anomaly', 'changepoint', 'source_group', 'source_file', 'datetime']
+        return data.drop(columns=[col for col in drop_cols if col in data.columns], errors='ignore')
+
+    def fit(self, train_data):
+        self.logger.info("Fitting StandardScaler and PCA on training data to prevent data leakage...")
+        features = self._get_features(train_data)
+        scaled_features = self.scaler.fit_transform(features)
+        self.pca.fit(scaled_features)
+        self.logger.info(f"Fit completed successfully. PCA features: {self.pca.n_components_}")
+        return self
+
+    def transform(self, data):
+        features = self._get_features(data)
+        scaled_data = self.scaler.transform(features)
+        pc1 = self.pca.transform(scaled_data)
         return scaled_data, pc1
+
+    def preprocess(self, data, fit_scaler=True):
+        if fit_scaler:
+            self.fit(data)
+        return self.transform(data)
+
 
     def get_labels(self, data):
         if 'anomaly' in data.columns:
