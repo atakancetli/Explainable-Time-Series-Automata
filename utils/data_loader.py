@@ -24,12 +24,24 @@ class TimeSeriesDataset(Dataset):
             return x, y
         return x
 
+import logging
+
 class DataLoader:
     def __init__(self, dataset_name):
         self.dataset_name = dataset_name
         self.config = Config()
         self.scaler = StandardScaler()
         self.pca = PCA(n_components=self.config.PCA_COMPONENTS)
+        
+        # Configure logging for data processing
+        self.logger = logging.getLogger(f"DataLoader_{dataset_name}")
+        if not self.logger.handlers:
+            handler = logging.StreamHandler()
+            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            handler.setFormatter(formatter)
+            self.logger.addHandler(handler)
+            self.logger.setLevel(logging.INFO)
+
 
     def load_skab(self, path):
         all_files = [os.path.join(path, f) for f in os.listdir(path) if f.endswith('.csv')]
