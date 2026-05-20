@@ -213,3 +213,31 @@ class TimeSeriesAutomata:
         self.build_transition_matrix(states)
         logger.info("Fitting TimeSeriesAutomata completed successfully.")
         return self
+
+    def get_transition_distribution(self, state):
+        """
+        Retrieves the transition count and frequency distribution for a given state.
+
+        Parameters:
+        -----------
+        state : str or tuple
+            The source state.
+
+        Returns:
+        --------
+        distribution : list of tuples
+            A sorted list of tuples (next_state, count, probability) in descending order of frequency.
+        """
+        if not hasattr(self, 'transitions') or state not in self.transitions:
+            return []
+
+        next_states = self.transitions[state]
+        total_transitions = sum(next_states.values())
+
+        dist = []
+        for n_state, count in next_states.items():
+            prob = count / total_transitions
+            dist.append((n_state, count, prob))
+
+        dist.sort(key=lambda item: item[1], reverse=True)
+        return dist
