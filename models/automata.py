@@ -195,3 +195,21 @@ class TimeSeriesAutomata:
         self.state_counts[s_last] = self.state_counts.get(s_last, 0) + 1
         
         logger.info(f"Transition frequency matrix built successfully. Unique states: {len(self.unique_states)}")
+
+    def fit(self, time_series, window_size=10):
+        """
+        Fits the TimeSeriesAutomata model by slicing the input time series,
+        converting it to a SAX state sequence, and constructing the transition matrix.
+
+        Parameters:
+        -----------
+        time_series : array-like of shape (N,) or (N, D)
+            The training normalized time series.
+        window_size : int
+            The sliding window size.
+        """
+        logger.info(f"Fitting TimeSeriesAutomata with window_size={window_size}...")
+        states = self.generate_states(time_series, window_size=window_size)
+        self.build_transition_matrix(states)
+        logger.info("Fitting TimeSeriesAutomata completed successfully.")
+        return self
