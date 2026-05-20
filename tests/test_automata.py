@@ -71,5 +71,96 @@ class TestTimeSeriesAutomata(unittest.TestCase):
         self.assertEqual(sax[0], "ae")
         self.assertEqual(sax[1], "ea")
 
+    def test_generate_states_1d(self):
+        # Time series of 15 elements, window_size=10, word_size=4
+        # We expect 15 - 10 + 1 = 6 states
+        self.automata.word_size = 4
+        series = np.arange(15, dtype=float)
+        states = self.automata.generate_states(series, window_size=10)
+        self.assertEqual(len(states), 6)
+        self.assertTrue(all(isinstance(s, str) for s in states))
+        self.assertTrue(all(len(s) == 4 for s in states))
+
+    def test_generate_states_2d(self):
+        # 2D series: 12 elements, 2 features, window_size=8
+        # We expect 12 - 8 + 1 = 5 states, each state should be a tuple of length 2
+        self.automata.word_size = 4
+        series = np.column_stack([np.arange(12), np.arange(12)*10])
+        states = self.automata.generate_states(series, window_size=8)
+        self.assertEqual(len(states), 5)
+        self.assertTrue(all(isinstance(s, tuple) for s in states))
+        self.assertTrue(all(len(s) == 2 for s in states))
+        self.assertTrue(all(len(dim_s) == 4 for s in states for dim_s in s))
+
+    def test_generate_states_value_error(self):
+        series = np.array([1.0, 2.0, 3.0])
+        with self.assertRaises(ValueError):
+            self.automata.generate_states(series, window_size=5)
+
+    def test_build_transition_matrix(self):
+        state_sequence = ['a', 'b', 'a', 'b', 'c', 'a']
+        self.automata.build_transition_matrix(state_sequence)
+        
+        # Check unique states
+        self.assertEqual(self.automata.unique_states, {'a', 'b', 'c'})
+        
+        # Check state counts
+        expected_counts = {'a': 3, 'b': 2, 'c': 1}
+        self.assertEqual(self.automata.state_counts, expected_counts)
+        
+        # Check transition dictionary structure and counts
+        # Transitions are:
+        # a -> b (2 times)
+        # b -> a (1 time)
+        # b -> c (1 time)
+        # c -> a (1 time)
+        expected_transitions = {
+            'a': {'b': 2},
+            'b': {'a': 1, 'c': 1},
+            'c': {'a': 1}
+        }
+        self.assertEqual(self.automata.transitions, expected_transitions)
+
+    def test_build_transition_matrix_short(self):
+        # Testing transition construction with less than 2 elements
+        self.automata.build_transition_matrix(['a'])
+        self.assertEqual(len(self.automata.transitions), 0)
+
+    def test_get_transition_distribution(self):
+        state_sequence = ['a', 'b', 'a', 'b', 'c', 'a']
+        self.automata.build_transition_matrix(state_sequence)
+        
+        # Distribution for 'b' should have 'a' and 'c' with prob 0.5 each
+        dist_b = self.automata.get_transition_distribution('b')
+        self.assertEqual(len(dist_b), 2)
+        # Order should be sorted by count/probability, but since counts are equal (1),
+        # any order is fine. Let's check contents.
+        states_in_dist = [item[0] for item in dist_b]
+        self.assertIn('a', states_in_dist)
+        self.assertIn('c', states_in_dist)
+        for state, count, prob in dist_b:
+            self.assertEqual(count, 1)
+            self.assertAlmostEqual(prob, 0.5)
+
+        # Distribution for non-existent or leaf/last state 'c'
+        # 'c' transitions to 'a' 1 time
+        dist_c = self.automata.get_transition_distribution('c')
+        self.assertEqual(dist_c, [('a', 1, 1.0)])
+
+        # Distribution for state not in transitions
+        dist_none = self.automata.get_transition_distribution('d')
+        self.assertEqual(dist_none, [])
+
+    def test_fit_pipeline(self):
+        series = np.sin(np.linspace(0, 10, 50))
+        self.automata.word_size = 5
+        self.automata.fit(series, window_size=15)
+        
+        # Verify transition dictionary was created
+        self.assertTrue(hasattr(self.automata, 'transitions'))
+        self.assertTrue(hasattr(self.automata, 'state_counts'))
+        self.assertTrue(len(self.automata.unique_states) > 0)
+
 if __name__ == '__main__':
     unittest.main()
+
