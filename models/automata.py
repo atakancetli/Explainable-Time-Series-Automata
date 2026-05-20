@@ -122,3 +122,40 @@ class TimeSeriesAutomata:
         if is_1d:
             return sax_sequences[0]
         return sax_sequences
+
+    def generate_states(self, time_series, window_size=10):
+        """
+        Slices a normalized time series using a sliding window and converts each slice
+        into a symbolic state representation via PAA and SAX.
+
+        Parameters:
+        -----------
+        time_series : array-like of shape (N,) or (N, D)
+            The input normalized time series data.
+        window_size : int
+            The raw sliding window size L.
+
+        Returns:
+        --------
+        states : list of (str or tuple)
+            A chronological list of states. Each state is a string (for 1D series) 
+            or a tuple of strings (for 2D series).
+        """
+        arr = np.asarray(time_series)
+        n = arr.shape[0]
+
+        if n < window_size:
+            raise ValueError(f"Time series length N={n} is less than window_size L={window_size}.")
+
+        states = []
+        for i in range(n - window_size + 1):
+            window_slice = arr[i : i + window_size]
+            paa_coeffs = self.paa_transform(window_slice)
+            sax_word = self.sax_transform(paa_coeffs)
+            
+            if isinstance(sax_word, list):
+                states.append(tuple(sax_word))
+            else:
+                states.append(sax_word)
+
+        return states
