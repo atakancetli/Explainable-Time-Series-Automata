@@ -159,3 +159,39 @@ class TimeSeriesAutomata:
                 states.append(sax_word)
 
         return states
+
+    def build_transition_matrix(self, state_sequence):
+        """
+        Builds the transition frequency matrix and tracks individual state counts
+        from a chronological sequence of symbolic states.
+
+        Parameters:
+        -----------
+        state_sequence : list of (str or tuple)
+            A chronological list of states.
+        """
+        self.transitions = {}
+        self.state_counts = {}
+        self.unique_states = set()
+
+        if len(state_sequence) < 2:
+            logger.warning("State sequence is too short to construct transitions.")
+            return
+
+        for i in range(len(state_sequence) - 1):
+            s_curr = state_sequence[i]
+            s_next = state_sequence[i + 1]
+
+            self.unique_states.add(s_curr)
+            self.unique_states.add(s_next)
+
+            self.state_counts[s_curr] = self.state_counts.get(s_curr, 0) + 1
+
+            if s_curr not in self.transitions:
+                self.transitions[s_curr] = {}
+            self.transitions[s_curr][s_next] = self.transitions[s_curr].get(s_next, 0) + 1
+
+        s_last = state_sequence[-1]
+        self.state_counts[s_last] = self.state_counts.get(s_last, 0) + 1
+        
+        logger.info(f"Transition frequency matrix built successfully. Unique states: {len(self.unique_states)}")
