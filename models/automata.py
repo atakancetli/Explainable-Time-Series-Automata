@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.stats import norm
 import logging
+from typing import Union, List, Dict, Tuple, Set
 
 logger = logging.getLogger("TimeSeriesAutomata")
 
@@ -123,21 +124,21 @@ class TimeSeriesAutomata:
             return sax_sequences[0]
         return sax_sequences
 
-    def generate_states(self, time_series, window_size=10):
+    def generate_states(self, time_series: np.ndarray, window_size: int = 10) -> List[Union[str, Tuple[str, ...]]]:
         """
         Slices a normalized time series using a sliding window and converts each slice
         into a symbolic state representation via PAA and SAX.
 
         Parameters:
         -----------
-        time_series : array-like of shape (N,) or (N, D)
+        time_series : np.ndarray
             The input normalized time series data.
         window_size : int
             The raw sliding window size L.
 
         Returns:
         --------
-        states : list of (str or tuple)
+        states : List[Union[str, Tuple[str, ...]]]
             A chronological list of states. Each state is a string (for 1D series) 
             or a tuple of strings (for 2D series).
         """
@@ -160,14 +161,14 @@ class TimeSeriesAutomata:
 
         return states
 
-    def build_transition_matrix(self, state_sequence):
+    def build_transition_matrix(self, state_sequence: List[Union[str, Tuple[str, ...]]]) -> None:
         """
         Builds the transition frequency matrix and tracks individual state counts
         from a chronological sequence of symbolic states.
 
         Parameters:
         -----------
-        state_sequence : list of (str or tuple)
+        state_sequence : List[Union[str, Tuple[str, ...]]]
             A chronological list of states.
         """
         self.transitions = {}
@@ -196,14 +197,14 @@ class TimeSeriesAutomata:
         
         logger.info(f"Transition frequency matrix built successfully. Unique states: {len(self.unique_states)}")
 
-    def fit(self, time_series, window_size=10):
+    def fit(self, time_series: np.ndarray, window_size: int = 10) -> "TimeSeriesAutomata":
         """
         Fits the TimeSeriesAutomata model by slicing the input time series,
         converting it to a SAX state sequence, and constructing the transition matrix.
 
         Parameters:
         -----------
-        time_series : array-like of shape (N,) or (N, D)
+        time_series : np.ndarray
             The training normalized time series.
         window_size : int
             The sliding window size.
@@ -214,18 +215,18 @@ class TimeSeriesAutomata:
         logger.info("Fitting TimeSeriesAutomata completed successfully.")
         return self
 
-    def get_transition_distribution(self, state):
+    def get_transition_distribution(self, state: Union[str, Tuple[str, ...]]) -> List[Tuple[Union[str, Tuple[str, ...]], int, float]]:
         """
         Retrieves the transition count and frequency distribution for a given state.
 
         Parameters:
         -----------
-        state : str or tuple
+        state : Union[str, Tuple[str, ...]]
             The source state.
 
         Returns:
         --------
-        distribution : list of tuples
+        distribution : List[Tuple[Union[str, Tuple[str, ...]], int, float]]
             A sorted list of tuples (next_state, count, probability) in descending order of frequency.
         """
         if not hasattr(self, 'transitions') or state not in self.transitions:
