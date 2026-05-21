@@ -284,3 +284,40 @@ class TimeSeriesAutomata:
         else:
             return float('inf')
 
+    def _map_unseen_state(self, state: Union[str, Tuple[str, ...]]) -> Union[str, Tuple[str, ...]]:
+        """
+        Maps an unseen state (not in self.unique_states) to the closest known state using state_distance.
+        If the state is already in self.unique_states, returns the state itself.
+        If self.unique_states is empty, returns the state itself.
+        If multiple states have the same minimal distance, returns the one with the highest state count.
+        If counts are also equal, uses lexicographical sorting of their string representations for deterministic tie-breaking.
+        """
+        if not hasattr(self, 'unique_states') or not self.unique_states:
+            return state
+            
+        if state in self.unique_states:
+            return state
+
+        best_state = None
+        min_dist = float('inf')
+        max_count = -1
+
+        for known_state in self.unique_states:
+            dist = self.state_distance(state, known_state)
+            if dist < min_dist:
+                min_dist = dist
+                best_state = known_state
+                max_count = self.state_counts.get(known_state, 0)
+            elif dist == min_dist:
+                count = self.state_counts.get(known_state, 0)
+                if count > max_count:
+                    max_count = count
+                    best_state = known_state
+                elif count == max_count:
+                    # Deterministic secondary tie-breaker
+                    if str(known_state) < str(best_state):
+                        best_state = known_state
+                        
+        return best_state
+
+
