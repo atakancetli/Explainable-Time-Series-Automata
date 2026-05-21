@@ -242,3 +242,45 @@ class TimeSeriesAutomata:
 
         dist.sort(key=lambda item: item[1], reverse=True)
         return dist
+
+    @staticmethod
+    def levenshtein_distance(s1: str, s2: str) -> int:
+        """
+        Computes the standard Levenshtein (edit) distance between two strings s1 and s2.
+        """
+        m, n = len(s1), len(s2)
+        dp = [[0] * (n + 1) for _ in range(m + 1)]
+        
+        for i in range(m + 1):
+            dp[i][0] = i
+        for j in range(n + 1):
+            dp[0][j] = j
+            
+        for i in range(1, m + 1):
+            for j in range(1, n + 1):
+                if s1[i - 1] == s2[j - 1]:
+                    dp[i][j] = dp[i - 1][j - 1]
+                else:
+                    dp[i][j] = 1 + min(
+                        dp[i - 1][j],      # Deletion
+                        dp[i][j - 1],      # Insertion
+                        dp[i - 1][j - 1]   # Substitution
+                    )
+        return dp[m][n]
+
+    def state_distance(self, s1: Union[str, Tuple[str, ...]], s2: Union[str, Tuple[str, ...]]) -> float:
+        """
+        Computes the distance between two states.
+        For univariate states (strings), returns Levenshtein distance.
+        For multivariate states (tuples of strings), returns the sum of component-wise Levenshtein distances.
+        If types do not match, returns infinity.
+        """
+        if isinstance(s1, tuple) and isinstance(s2, tuple):
+            if len(s1) != len(s2):
+                return float('inf')
+            return float(sum(self.levenshtein_distance(x1, x2) for x1, x2 in zip(s1, s2)))
+        elif isinstance(s1, str) and isinstance(s2, str):
+            return float(self.levenshtein_distance(s1, s2))
+        else:
+            return float('inf')
+
