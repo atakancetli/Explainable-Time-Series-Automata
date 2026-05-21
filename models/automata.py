@@ -11,10 +11,13 @@ class TimeSeriesAutomata:
     Implements Piecewise Aggregate Approximation (PAA) and Symbolic Aggregate Approximation (SAX)
     with dynamic Gaussian breakpoints for time-series discretization and sequence analysis.
     
-    Mathematical details:
+    Mathematical details & Features:
       1. PAA: Reduces dimensionality from N to w using fractional overlap bin averages.
       2. SAX: Discretizes PAA coefficients into symbolic sequences ('a', 'b', 'c', ...)
          based on equiprobable regions separated by standard normal (Gaussian) breakpoints.
+      3. Levenshtein Distance & Unseen Pattern Mapping: Handles out-of-vocabulary test patterns.
+      4. Path Probability & Anomaly Scoring: Computes rolling sequence path probabilities for explaining predictions.
+
     """
     def __init__(self, alphabet_size=5, word_size=10):
         """
