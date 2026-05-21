@@ -161,6 +161,116 @@ class TestTimeSeriesAutomata(unittest.TestCase):
         self.assertTrue(hasattr(self.automata, 'state_counts'))
         self.assertTrue(len(self.automata.unique_states) > 0)
 
+    def test_levenshtein_distance(self):
+        self.assertEqual(TimeSeriesAutomata.levenshtein_distance("abc", "abc"), 0)
+        self.assertEqual(TimeSeriesAutomata.levenshtein_distance("abc", "abd"), 1)
+        self.assertEqual(TimeSeriesAutomata.levenshtein_distance("abc", "abcd"), 1)
+        self.assertEqual(TimeSeriesAutomata.levenshtein_distance("abc", "ac"), 1)
+        self.assertEqual(TimeSeriesAutomata.levenshtein_distance("kitten", "sitting"), 3)
+
+    def test_state_distance(self):
+        # Univariate
+        self.assertEqual(self.automata.state_distance("abc", "abd"), 1.0)
+        # Multivariate
+        self.assertEqual(self.automata.state_distance(("abc", "xyz"), ("abd", "xyw")), 2.0)
+        # Type mismatch
+        self.assertEqual(self.automata.state_distance("abc", ("abc",)), float('inf'))
+        self.assertEqual(self.automata.state_distance(("abc",), "abc"), float('inf'))
+        # Length mismatch
+        self.assertEqual(self.automata.state_distance(("abc", "def"), ("abc",)), float('inf'))
+
+    def test_unseen_state_mapping(self):
+        # Set up a known set of states
+        self.automata.unique_states = {"abc", "bcd", "cde"}
+        self.automata.state_counts = {"abc": 5, "bcd": 2, "cde": 5}
+        
+        # Test exact match
+        self.assertEqual(self.automata._map_unseen_state("abc"), "abc")
+        
+        # Test mapping to nearest
+        self.assertEqual(self.automata._map_unseen_state("abb"), "abc") # dist("abb", "abc")=1, others=3
+        self.assertEqual(self.automata._map_unseen_state("bce"), "bcd") # dist("bce", "bcd")=1, others=3
+        
+        # Test tie-breaking by count
+        # "abd" has dist=1 to both "abc" and "bcd". "abc" count is 5, "bcd" count is 2.
+        self.assertEqual(self.automata._map_unseen_state("abd"), "abc")
+        
+        # Test tie-breaking lexicographically
+        # "b" is dist 3 to both "abc" and "cde". Both have count 5.
+        # Lexicographically, "abc" < "cde".
+        self.assertEqual(self.automata._map_unseen_state("b"), "abc")
+
+    def test_calculate_path_probability(self):
+        # Set up a simple transition structure
+        # a -> b (prob 0.8), a -> c (prob 0.2)
+        # b -> c (prob 1.0)
+        self.automata.unique_states = {"a", "b", "c"}
+        self.automata.state_counts = {"a": 10, "b": 8, "c": 3}
+        self.automata.transitions = {
+            "a": {"b": 8, "c": 2},
+            "b": {"c": 8}
+        }
+        
+        # Path a -> b -> c probability: P(a -> b) * P(b -> c) = 0.8 * 1.0 = 0.8
+        self.assertAlmostEqual(self.automata.calculate_path_probability(["a", "b", "c"]), 0.8)
+        
+        # Unseen state mapping in path probability
+        # "x" is unseen, maps to nearest seen state. Let's make "x" map to "a".
+        # dist("x", "a") = 1, dist("x", "b") = 1, dist("x", "c") = 1.
+        # Counts are "a": 10, "b": 8, "c": 3. "a" has the highest count, so "x" maps to "a".
+        # Path x -> b -> c should map to a -> b -> c, probability 0.8
+        self.assertAlmostEqual(self.automata.calculate_path_probability(["x", "b", "c"]), 0.8)
+        
+        # Zero transition smoothed
+        # c -> a has transition count 0.
+        self.assertAlmostEqual(self.automata.calculate_path_probability(["c", "a"], min_prob=0.05), 0.05)
+
+    def test_predict_anomaly_and_explain(self):
+        # Fit the automata on a simple sin wave
+        series = np.sin(np.linspace(0, 20, 100))
+        self.automata.word_size = 4
+        self.automata.fit(series, window_size=10)
+        
+        # Test on the same series - should have normal path probabilities
+        predictions_normal = self.automata.predict_anomaly(series, window_size=10, threshold=0.001)
+        # Should be mostly normal (few or zero anomalies)
+        self.assertTrue(np.mean(predictions_normal) < 0.2)
+        
+        # Now introduce a sudden flat line at the end of the test series (anomaly transition)
+        test_series = series.copy()
+        test_series[-20:] = 0.0
+        
+        predictions_anom = self.automata.predict_anomaly(test_series, window_size=10, threshold=0.001)
+        explanations = self.automata.explain_decision(test_series, window_size=10, threshold=0.001)
+        
+        # Check that we detected the anomaly transition
+        self.assertTrue(np.sum(predictions_anom) >= 1)
+        
+        # Verify explain_decision format matches Section X.F and X.A perfectly
+        self.assertEqual(len(explanations), len(predictions_anom) - 1)
+        
+        # Check first explanation structure
+        first_diag = explanations[0]
+        self.assertEqual(first_diag["time_step"], 1)
+        self.assertIn("state", first_diag)
+        self.assertIn("pattern", first_diag)
+        self.assertIn("status", first_diag)
+        self.assertIn("mapped_to", first_diag)
+        self.assertIn("distance", first_diag)
+        self.assertIn("transitions", first_diag)
+        self.assertIn("probability", first_diag)
+        self.assertIn("decision", first_diag)
+        self.assertIn("confidence_score", first_diag)
+        self.assertIn("reason", first_diag)
+        
+        # Ensure transitions has correct schema
+        self.assertTrue(len(first_diag["transitions"]) > 0)
+        first_trans = first_diag["transitions"][0]
+        self.assertIn("from", first_trans)
+        self.assertIn("to", first_trans)
+        self.assertIn("probability", first_trans)
+
+
 if __name__ == '__main__':
     unittest.main()
 
