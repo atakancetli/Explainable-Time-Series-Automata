@@ -362,5 +362,127 @@ class TimeSeriesAutomata:
             
         return path_prob
 
+    def predict_anomaly(self, time_series: np.ndarray, window_size: int = 10, threshold: float = 0.01, path_window: int = 2, min_prob: float = 1e-6) -> np.ndarray:
+        """
+        Predicts anomalies in a test time series.
+        For each sliding window, maps its state, evaluates rolling path probability,
+        and marks it as an anomaly if the path probability is below threshold.
+        
+        Parameters:
+        -----------
+        time_series : np.ndarray
+            The test time series.
+        window_size : int
+            The sliding window size L.
+        threshold : float
+            The anomaly detection path probability threshold.
+        path_window : int
+            The length of the rolling transitions window to evaluate (e.g. 2).
+        min_prob : float
+            Minimal probability smoothing.
+            
+        Returns:
+        --------
+        predictions : np.ndarray of shape (N - window_size + 1,)
+            Binary array where 1 indicates anomaly and 0 indicates normal.
+        """
+        states = self.generate_states(time_series, window_size=window_size)
+        num_windows = len(states)
+        predictions = np.zeros(num_windows, dtype=int)
+        
+        # S0 has no previous state for transition, so by default it's normal (0).
+        # We start predicting from window 1 onwards.
+        for t in range(1, num_windows):
+            # Sequence of states for rolling path ending at t or forward-looking from t-1
+            # We use forward-looking of path_window starting at t-1 (matching PDF transitions: S_{t-1} -> S_t -> S_{t+1})
+            end_idx = min(t - 1 + path_window + 1, num_windows)
+            active_sequence = states[t - 1 : end_idx]
+            
+            prob = self.calculate_path_probability(active_sequence, min_prob=min_prob)
+            if prob < threshold:
+                predictions[t] = 1
+                
+        return predictions
+
+    def explain_decision(self, time_series: np.ndarray, window_size: int = 10, threshold: float = 0.01, path_window: int = 2, min_prob: float = 1e-6) -> List[Dict]:
+        """
+        Generates structured, JSON-compliant explainability diagnostics for each step
+        in the test time series anomaly detection process.
+        
+        Parameters:
+        -----------
+        time_series : np.ndarray
+            The test time series.
+        window_size : int
+            The sliding window size L.
+        threshold : float
+            The anomaly detection path probability threshold.
+        path_window : int
+            The length of the rolling transitions window.
+        min_prob : float
+            Minimal probability smoothing.
+            
+        Returns:
+        --------
+        explanations : List[Dict]
+            A list of diagnostic dictionaries, one for each prediction step (from step 1 onwards).
+        """
+        states = self.generate_states(time_series, window_size=window_size)
+        num_windows = len(states)
+        explanations = []
+        
+        for t in range(1, num_windows):
+            s_curr_raw = states[t]
+            s_prev_raw = states[t - 1]
+            
+            s_curr_mapped = self._map_unseen_state(s_curr_raw)
+            s_prev_mapped = self._map_unseen_state(s_prev_raw)
+            
+            status = "seen" if s_curr_raw in self.unique_states else "unseen"
+            
+            # Identify active transitions for the rolling path starting at t-1
+            end_idx = min(t - 1 + path_window + 1, num_windows)
+            active_sequence = states[t - 1 : end_idx]
+            mapped_active = [self._map_unseen_state(s) for s in active_sequence]
+            
+            # List individual transitions
+            transition_list = []
+            for i in range(len(mapped_active) - 1):
+                s_from = mapped_active[i]
+                s_to = mapped_active[i + 1]
+                prob = min_prob
+                if hasattr(self, 'transitions') and s_from in self.transitions:
+                    outgoing = self.transitions[s_from]
+                    total = sum(outgoing.values())
+                    if total > 0 and s_to in outgoing:
+                        prob = outgoing[s_to] / total
+                transition_list.append({
+                    "from": s_from,
+                    "to": s_to,
+                    "probability": prob
+                })
+                
+            path_prob = self.calculate_path_probability(active_sequence, min_prob=min_prob)
+            decision = "anomaly" if path_prob < threshold else "normal"
+            
+            # JSON-compliant structure matching Sections X.A & X.F exactly
+            diag = {
+                "time_step": t,
+                "state": s_prev_mapped,
+                "pattern": s_curr_raw,
+                "status": status,
+                "mapped_to": s_curr_mapped,
+                "distance": self.state_distance(s_curr_raw, s_curr_mapped) if status == "unseen" else 0.0,
+                "transitions": transition_list,
+                "probability": path_prob,
+                "decision": decision,
+                "confidence_score": path_prob,
+                "reason": "Low probability path detected" if decision == "anomaly" else "Normal path transition probability"
+            }
+            explanations.append(diag)
+            
+        return explanations
+
+
 
 
