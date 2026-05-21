@@ -320,4 +320,47 @@ class TimeSeriesAutomata:
                         
         return best_state
 
+    def calculate_path_probability(self, state_sequence: List[Union[str, Tuple[str, ...]]], min_prob: float = 1e-6) -> float:
+        """
+        Calculates the path probability of a sequence of states using transition probabilities.
+        First maps any unseen states to their nearest seen states in training data.
+        
+        Parameters:
+        -----------
+        state_sequence : List[Union[str, Tuple[str, ...]]]
+            The sequence of symbolic states (words) to analyze.
+        min_prob : float
+            Minimal default probability to prevent zero-likelihood multiplication.
+            
+        Returns:
+        --------
+        path_prob : float
+            The cumulative path probability (product of successive transition probabilities).
+        """
+        if len(state_sequence) < 2:
+            return 1.0
+
+        mapped_sequence = [self._map_unseen_state(s) for s in state_sequence]
+        
+        path_prob = 1.0
+        for i in range(len(mapped_sequence) - 1):
+            s_curr = mapped_sequence[i]
+            s_next = mapped_sequence[i + 1]
+            
+            # Calculate transition probability P(s_curr -> s_next)
+            if hasattr(self, 'transitions') and s_curr in self.transitions:
+                outgoing = self.transitions[s_curr]
+                total_outgoing = sum(outgoing.values())
+                if total_outgoing > 0 and s_next in outgoing:
+                    prob = outgoing[s_next] / total_outgoing
+                else:
+                    prob = min_prob
+            else:
+                prob = min_prob
+                
+            path_prob *= prob
+            
+        return path_prob
+
+
 
