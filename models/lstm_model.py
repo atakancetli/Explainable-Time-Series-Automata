@@ -2,6 +2,11 @@ import torch
 import torch.nn as nn
 
 class LSTMModel(nn.Module):
+    """
+    Standard LSTM recurrent neural network model for sequential time-series anomaly detection.
+    
+    Incorporates dropout regularization and outputs dynamic probability scores.
+    """
     def __init__(self, input_dim, hidden_dim, num_layers, output_dim=1, dropout=0.2):
         super(LSTMModel, self).__init__()
         self.lstm = nn.LSTM(
