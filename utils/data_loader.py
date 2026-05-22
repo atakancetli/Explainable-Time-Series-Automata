@@ -8,22 +8,101 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.model_selection import GroupKFold, StratifiedGroupKFold
 from configs.config import Config
+from typing import Optional, Tuple, Union
 
 class TimeSeriesDataset(Dataset):
-    def __init__(self, data, window_size, labels=None):
-        self.data = torch.tensor(data, dtype=torch.float32)
-        self.window_size = window_size
-        self.labels = torch.tensor(labels, dtype=torch.float32) if labels is not None else None
+    """
+    PyTorch Dataset wrapper for time-series data using sliding window chunking.
+    
+    This dataset constructs sequences of length `window_size` from sequential
+    sensor readings to prepare them for RNN/LSTM model consumption.
+    
+    Attributes:
+        data (torch.Tensor): Model feature tensor of shape (N, num_features).
+        window_size (int): Size of the temporal sliding window.
+        labels (Optional[torch.Tensor]): Target anomaly binary label tensor of shape (N,).
+    """
+    def __init__(
+        self, 
+        data: Union[np.ndarray, pd.DataFrame, torch.Tensor], 
+        window_size: int, 
+        labels: Optional[Union[np.ndarray, pd.Series, torch.Tensor]] = None
+    ) -> None:
+        """
+        Initializes the sliding window dataset.
+        
+        Args:
+            data: Feature sequences, either as numpy array, pandas DataFrame, or PyTorch tensor.
+            window_size: Length of each feature sequence window.
+            labels: Optional labels mapping to each step in the dataset.
+            
+        Raises:
+            ValueError: If window_size is non-positive or exceeds the total data length.
+            ValueError: If the length of data and labels does not match.
+        """
+        if window_size <= 0:
+            raise ValueError(f"window_size must be a positive integer. Got {window_size}")
+            
+        if len(data) < window_size:
+            raise ValueError(
+                f"Data length ({len(data)}) must be greater than or equal to window_size ({window_size})."
+            )
+            
+        if labels is not None and len(labels) != len(data):
+            raise ValueError(
+                f"Length of data ({len(data)}) and labels ({len(labels)}) must match."
+            )
 
-    def __len__(self):
+        # Convert data safely to PyTorch tensor
+        if isinstance(data, torch.Tensor):
+            self.data = data.clone().detach().float()
+        elif isinstance(data, (np.ndarray, pd.DataFrame)):
+            val = data.values if isinstance(data, pd.DataFrame) else data
+            self.data = torch.tensor(val, dtype=torch.float32)
+        else:
+            self.data = torch.tensor(data, dtype=torch.float32)
+            
+        self.window_size = window_size
+        
+        # Convert labels safely to PyTorch tensor
+        if labels is not None:
+            if isinstance(labels, torch.Tensor):
+                self.labels = labels.clone().detach().float()
+            elif isinstance(labels, (np.ndarray, pd.Series)):
+                val_lbl = labels.values if isinstance(labels, pd.Series) else labels
+                self.labels = torch.tensor(val_lbl, dtype=torch.float32)
+            else:
+                self.labels = torch.tensor(labels, dtype=torch.float32)
+        else:
+            self.labels = None
+
+    def __len__(self) -> int:
+        """
+        Returns the total number of sliding window sequences.
+        """
         return len(self.data) - self.window_size
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
+        """
+        Retrieves the sequence block at the given index.
+        
+        Args:
+            idx: Base starting index for the sliding window.
+            
+        Returns:
+            A tuple of (x, y) if labels are provided, where x is of shape (window_size, num_features)
+            and y is the target scalar. Otherwise, returns only the feature sequence x.
+        """
+        max_idx = len(self) - 1
+        if idx < 0 or idx > max_idx:
+            raise IndexError(f"Index {idx} out of range for TimeSeriesDataset of length {len(self)}")
+            
         x = self.data[idx : idx + self.window_size]
         if self.labels is not None:
             y = self.labels[idx + self.window_size]
             return x, y
         return x
+
 
 class DataLoader:
     """
