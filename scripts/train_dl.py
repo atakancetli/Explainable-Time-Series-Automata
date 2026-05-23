@@ -7,6 +7,7 @@ from utils.train_utils import train_one_epoch, validate, EarlyStopping, save_mod
 from utils.logger import setup_logger
 from utils.visualization import plot_loss
 import pandas as pd
+import os
 import numpy as np
 from sklearn.metrics import f1_score
 
@@ -52,7 +53,13 @@ def run_training(dataset_name, model_type):
     logger = setup_logger(f"Train_{model_type}", f"{dataset_name}_{model_type}.log")
     
     loader = DataLoader(dataset_name)
-    raw_data = loader.load_skab(config.SKAB_PATH) if dataset_name == "SKAB" else loader.load_batadal(config.BATADAL_PATH)
+    if dataset_name == "SKAB":
+        raw_data = loader.load_skab(config.SKAB_PATH)
+    else:
+        path = config.BATADAL_PATH
+        if os.path.isdir(path):
+            path = os.path.join(path, "batadal_training_2.csv")
+        raw_data = loader.load_batadal(path)
     scaled_data, _ = loader.preprocess(raw_data)
     labels = loader.get_labels(raw_data)
     
@@ -64,7 +71,14 @@ def run_training(dataset_name, model_type):
         train_labels.values, val_labels.values, test_labels.values
     )
     
-    model = ModelFactory.get_model(model_type, scaled_data.shape[1], config.HIDDEN_SIZE, config.NUM_LAYERS).to(config.DEVICE)
+    model = ModelFactory.get_model(
+        model_type, 
+        scaled_data.shape[1], 
+        config.HIDDEN_SIZE, 
+        config.NUM_LAYERS,
+        dropout=0.2,
+        window_size=config.WINDOW_SIZE
+    ).to(config.DEVICE)
     criterion = nn.BCELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=config.LEARNING_RATE)
     
@@ -103,5 +117,10 @@ def run_training(dataset_name, model_type):
     plot_loss(train_losses, val_losses, f"results/plots/{dataset_name}_{model_type}_loss.png")
 
 if __name__ == "__main__":
-    for m in ["LSTM", "CNN"]:
-        run_training("SKAB", m)
+    for dataset in ["SKAB", "BATADAL"]:
+        for m in ["LSTM", "GRU", "CNN"]:
+            try:
+                run_training(dataset, m)
+            except Exception as e:
+                print(f"Error training {m} on {dataset}: {e}")
+
