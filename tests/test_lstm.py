@@ -5,6 +5,9 @@ import numpy as np
 import os
 import shutil
 from models.lstm_model import LSTMModel
+from models.gru_model import GRUModel
+from models.cnn_model import CNNModel
+from models.model_factory import ModelFactory
 from utils.data_loader import TimeSeriesDataset
 from utils.train_utils import EarlyStopping
 
@@ -43,6 +46,70 @@ class TestLSTMAndDLBaselines(unittest.TestCase):
         # The output of standard LSTMModel has sigmoid squeeze so it should be of shape (batch_size,)
         self.assertEqual(y_pred.shape, (batch_size,))
         self.assertTrue((y_pred >= 0.0).all() and (y_pred <= 1.0).all())
+
+    def test_gru_model_dimensions(self):
+        # Verify GRU model dimensions & regularizations
+        batch_size = 4
+        window_size = 10
+        input_dim = 6
+        hidden_dim = 32
+        num_layers = 3
+        
+        model = GRUModel(
+            input_dim=input_dim,
+            hidden_dim=hidden_dim,
+            num_layers=num_layers,
+            dropout=0.3
+        )
+        
+        # Test shape forward pass
+        x = torch.randn(batch_size, window_size, input_dim)
+        y_pred = model(x)
+        self.assertEqual(y_pred.shape, (batch_size,))
+        self.assertTrue((y_pred >= 0.0).all() and (y_pred <= 1.0).all())
+
+    def test_cnn_model_parameter_sensitivity(self):
+        # Verify CNN model dynamic sequence length (parameter sensitivity sweep safety)
+        batch_size = 4
+        input_dim = 6
+        hidden_dim = 16
+        num_layers = 1
+        
+        # Test sweep window sizes: 3, 4, 5, 6
+        for w_size in [3, 4, 5, 6]:
+            model = CNNModel(
+                input_dim=input_dim,
+                hidden_dim=hidden_dim,
+                num_layers=num_layers,
+                window_size=w_size,
+                dropout=0.1
+            )
+            x = torch.randn(batch_size, w_size, input_dim)
+            y_pred = model(x)
+            self.assertEqual(y_pred.shape, (batch_size,))
+            self.assertTrue((y_pred >= 0.0).all() and (y_pred <= 1.0).all())
+
+    def test_model_factory_instantiation(self):
+        # Verify ModelFactory returns correct instances
+        input_dim = 4
+        hidden_dim = 8
+        num_layers = 1
+        
+        # 1. Test LSTM Model
+        model_lstm = ModelFactory.get_model("LSTM", input_dim, hidden_dim, num_layers, dropout=0.2)
+        self.assertIsInstance(model_lstm, LSTMModel)
+        
+        # 2. Test GRU Model
+        model_gru = ModelFactory.get_model("GRU", input_dim, hidden_dim, num_layers, dropout=0.2)
+        self.assertIsInstance(model_gru, GRUModel)
+        
+        # 3. Test CNN Model
+        model_cnn = ModelFactory.get_model("CNN", input_dim, hidden_dim, num_layers, dropout=0.2, window_size=10)
+        self.assertIsInstance(model_cnn, CNNModel)
+        
+        # 4. Test Unknown model
+        with self.assertRaises(ValueError):
+            ModelFactory.get_model("UNKNOWN", input_dim, hidden_dim, num_layers)
 
     def test_time_series_dataset_validations(self):
         # 2. Sliding dataset loaders & validations
@@ -128,3 +195,4 @@ class TestLSTMAndDLBaselines(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
