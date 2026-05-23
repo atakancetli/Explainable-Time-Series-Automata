@@ -56,6 +56,7 @@ def run_training(dataset_name, model_type):
     if dataset_name == "SKAB":
         raw_data = loader.load_skab(config.SKAB_PATH)
     else:
+        # Dynamically resolve BATADAL CSV file path if configured as a parent folder
         path = config.BATADAL_PATH
         if os.path.isdir(path):
             path = os.path.join(path, "batadal_training_2.csv")
