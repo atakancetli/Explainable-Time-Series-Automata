@@ -121,8 +121,78 @@ def evaluate_automata_batadal_robustness(seed, noise_scale=0.1):
         "noisy_accuracy": float(metrics_noisy["accuracy"])
     }
 
+def evaluate_dl_skab_kfold_robustness(model_type, seed, noise_scale=0.1):
+    """
+    Placeholder for Deep Learning models on SKAB with GroupKFold splits and noise.
+    """
+    return {
+        "orig_f1": 0.0, "orig_precision": 0.0, "orig_recall": 0.0, "orig_accuracy": 0.0,
+        "noisy_f1": 0.0, "noisy_precision": 0.0, "noisy_recall": 0.0, "noisy_accuracy": 0.0
+    }
+
+def evaluate_dl_batadal_robustness(model_type, seed, noise_scale=0.1):
+    """
+    Placeholder for Deep Learning models on BATADAL chronological splits with noise.
+    """
+    return {
+        "orig_f1": 0.0, "orig_precision": 0.0, "orig_recall": 0.0, "orig_accuracy": 0.0,
+        "noisy_f1": 0.0, "noisy_precision": 0.0, "noisy_recall": 0.0, "noisy_accuracy": 0.0
+    }
+
 def run_multi_model_robustness_sweeps(noise_scales=[0.05, 0.1, 0.15, 0.2, 0.25]):
     """
     Coordinates multi-model and multi-dataset robustness evaluations.
     """
-    pass
+    seeds = [42, 123, 2026, 7, 999]
+    metrics_file = "robustness_sweep_results.csv"
+    os.makedirs("results/metrics", exist_ok=True)
+    path = os.path.join("results/metrics", metrics_file)
+    if os.path.exists(path):
+        os.remove(path)
+        
+    all_results = []
+    
+    for dataset in ["SKAB", "BATADAL"]:
+        for model in ["Automata", "LSTM", "GRU", "CNN"]:
+            for scale in noise_scales:
+                print(f"Sweeping robustness for {dataset} | {model} | Noise={scale}...")
+                scale_results = []
+                for seed in seeds:
+                    try:
+                        if dataset == "SKAB":
+                            if model == "Automata":
+                                metrics = evaluate_automata_skab_kfold_robustness(seed, scale)
+                            else:
+                                metrics = evaluate_dl_skab_kfold_robustness(model, seed, scale)
+                        else:
+                            if model == "Automata":
+                                metrics = evaluate_automata_batadal_robustness(seed, scale)
+                            else:
+                                metrics = evaluate_dl_batadal_robustness(model, seed, scale)
+                        
+                        scale_results.append(metrics)
+                    except Exception as e:
+                        print(f"Error evaluating {model} on {dataset} with seed {seed}: {e}")
+                
+                if len(scale_results) > 0:
+                    avg_metrics = {
+                        "dataset": dataset,
+                        "model": model,
+                        "noise_scale": scale,
+                        "orig_f1": float(np.mean([r["orig_f1"] for r in scale_results])),
+                        "orig_precision": float(np.mean([r["orig_precision"] for r in scale_results])),
+                        "orig_recall": float(np.mean([r["orig_recall"] for r in scale_results])),
+                        "orig_accuracy": float(np.mean([r["orig_accuracy"] for r in scale_results])),
+                        "noisy_f1": float(np.mean([r["noisy_f1"] for r in scale_results])),
+                        "noisy_precision": float(np.mean([r["noisy_precision"] for r in scale_results])),
+                        "noisy_recall": float(np.mean([r["noisy_recall"] for r in scale_results])),
+                        "noisy_accuracy": float(np.mean([r["noisy_accuracy"] for r in scale_results]))
+                    }
+                    save_results(avg_metrics, metrics_file)
+                    all_results.append(avg_metrics)
+                    print(f"==> Avg Results for {dataset} {model} (Noise {scale}): Clean F1 = {avg_metrics['orig_f1']:.4f} | Noisy F1 = {avg_metrics['noisy_f1']:.4f}")
+    
+    return all_results
+
+if __name__ == "__main__":
+    run_multi_model_robustness_sweeps()
