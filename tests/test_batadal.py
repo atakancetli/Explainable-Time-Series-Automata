@@ -66,5 +66,23 @@ class TestBATADALChronologicalSweeps(unittest.TestCase):
         self.assertEqual(thresh1, thresh2)
         self.assertEqual(f1_1, f1_2)
 
+    def test_evaluate_model_batadal_multi_seed(self):
+        """
+        Integration test verifying that evaluate_model_batadal_multi_seed correctly loads
+        a saved BATADAL LSTM checkpoint and calculates evaluation metrics.
+        """
+        from scripts.test_dl import evaluate_model_batadal_multi_seed
+        
+        # Evaluate LSTM model on BATADAL for seed 42
+        metrics = evaluate_model_batadal_multi_seed("LSTM", 42)
+        
+        self.assertIn("f1", metrics)
+        self.assertIn("precision", metrics)
+        self.assertIn("recall", metrics)
+        self.assertIn("accuracy", metrics)
+        
+        for k in ["f1", "precision", "recall", "accuracy"]:
+            self.assertTrue(0.0 <= metrics[k] <= 1.0)
+
 if __name__ == '__main__':
     unittest.main()
