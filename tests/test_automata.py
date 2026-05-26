@@ -270,6 +270,34 @@ class TestTimeSeriesAutomata(unittest.TestCase):
         self.assertIn("to", first_trans)
         self.assertIn("probability", first_trans)
 
+    def test_find_best_threshold_automata(self):
+        """
+        Verifies that find_best_threshold_automata returns a valid threshold and runs cleanly.
+        """
+        from scripts.evaluate_automata import find_best_threshold_automata
+        
+        series = np.sin(np.linspace(0, 20, 50))
+        self.automata.fit(series, window_size=10)
+        
+        val_labels = np.zeros(50, dtype=int)
+        val_labels[20:25] = 1 # Introduce mock anomalies
+        
+        thresh, f1 = find_best_threshold_automata(self.automata, series, val_labels, window_size=10)
+        self.assertTrue(0.0 <= thresh <= 1.0)
+        self.assertTrue(0.0 <= f1 <= 1.0)
+
+    def test_run_automata_skab_kfold(self):
+        """
+        Verifies that run_automata_skab_kfold runs cleanly for seed 42.
+        """
+        from scripts.evaluate_automata import run_automata_skab_kfold
+        
+        results = run_automata_skab_kfold(42)
+        self.assertEqual(results["dataset"], "SKAB")
+        self.assertEqual(results["model"], "Automata")
+        self.assertEqual(results["seed"], 42)
+        self.assertIn("f1", results)
+        self.assertIn("accuracy", results)
 
 if __name__ == '__main__':
     unittest.main()
