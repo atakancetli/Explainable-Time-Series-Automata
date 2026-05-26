@@ -116,11 +116,31 @@ def evaluate_model_batadal_multi_seed(model_type, seed):
 
 if __name__ == "__main__":
     seeds = [42, 123, 2026, 7, 999]
-    for m in ["LSTM", "GRU", "CNN"]:
-        for seed in seeds:
-            try:
-                metrics = evaluate_model_batadal_multi_seed(m, seed)
-                print(f"Results for BATADAL {m} (Seed {seed}): {metrics}")
-            except Exception as e:
-                print(f"Error evaluating {m} on BATADAL with seed {seed}: {e}")
+    metrics_file = "dl_test_metrics.csv"
+    
+    # Remove previous test metrics file if it exists to have clean results
+    os.makedirs("results/metrics", exist_ok=True)
+    path = os.path.join("results/metrics", metrics_file)
+    if os.path.exists(path):
+        os.remove(path)
+        
+    for dataset in ["SKAB", "BATADAL"]:
+        for m in ["LSTM", "GRU", "CNN"]:
+            for seed in seeds:
+                try:
+                    if dataset == "SKAB":
+                        metrics = evaluate_model_skab_kfold(m, seed)
+                    else:
+                        metrics = evaluate_model_batadal_multi_seed(m, seed)
+                        
+                    results = {
+                        "dataset": dataset,
+                        "model": m,
+                        "seed": seed,
+                        **metrics
+                    }
+                    save_results(results, metrics_file)
+                    print(f"Results for {dataset} {m} (Seed {seed}): {metrics}")
+                except Exception as e:
+                    print(f"Error evaluating {m} on {dataset} with seed {seed}: {e}")
 
