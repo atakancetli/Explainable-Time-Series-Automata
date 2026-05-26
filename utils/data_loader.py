@@ -304,6 +304,19 @@ class DataLoader:
         
         return train_loader, val_loader, test_loader
 
+    def get_fold_dataloaders(self, train_data, val_data, train_labels, val_labels):
+        """
+        Generates Datasets and DataLoaders for a specific cross-validation fold.
+        """
+        train_ds = TimeSeriesDataset(train_data, self.config.WINDOW_SIZE, train_labels)
+        val_ds = TimeSeriesDataset(val_data, self.config.WINDOW_SIZE, val_labels)
+        
+        train_loader = TorchDataLoader(train_ds, batch_size=self.config.BATCH_SIZE, shuffle=True)
+        val_loader = TorchDataLoader(val_ds, batch_size=self.config.BATCH_SIZE, shuffle=False)
+        
+        return train_loader, val_loader
+
+
     def split_by_group(self, data, n_splits=5, stratified=True):
         self.logger.info(f"Splitting data using {'StratifiedGroupKFold' if stratified else 'GroupKFold'} with {n_splits} splits.")
         if stratified:
