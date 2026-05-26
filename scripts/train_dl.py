@@ -242,6 +242,7 @@ def run_training_batadal_chronological(model_type, seed):
     
     metrics = calculate_metrics(y_true, y_pred)
     
+    # Log consolidated performance metrics and training/inference execution runtimes for Table 5
     results = {
         "dataset": "BATADAL",
         "model": model_type,
