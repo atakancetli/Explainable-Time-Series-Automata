@@ -75,3 +75,54 @@ def evaluate_automata_skab_kfold_robustness(seed, noise_scale=0.1):
         "noisy_recall": float(avg_rec_noisy),
         "noisy_accuracy": float(avg_acc_noisy)
     }
+
+def evaluate_automata_batadal_robustness(seed, noise_scale=0.1):
+    """
+    Evaluates Automata model on BATADAL chronological splits with noise perturbation.
+    """
+    config = Config()
+    set_seed(seed)
+    
+    loader = DataLoader("BATADAL")
+    path = config.BATADAL_PATH
+    if os.path.isdir(path):
+        path = os.path.join(path, "batadal_training_2.csv")
+    raw_data = loader.load_batadal(path)
+    scaled_data, _ = loader.preprocess(raw_data)
+    labels = loader.get_labels(raw_data)
+    
+    train_data, val_data, test_data = loader.split_chronological(pd.DataFrame(scaled_data))
+    train_labels, val_labels, test_labels = loader.split_chronological(pd.Series(labels))
+    
+    automata = TimeSeriesAutomata(alphabet_size=config.ALPHABET_SIZE, word_size=4)
+    automata.fit(train_data.values, window_size=config.WINDOW_SIZE)
+    
+    from scripts.evaluate_automata import find_best_threshold_automata
+    best_thresh, _ = find_best_threshold_automata(automata, val_data.values, val_labels.values, config.WINDOW_SIZE)
+    
+    # Original evaluation
+    preds_clean_all = automata.predict_anomaly(test_data.values, window_size=config.WINDOW_SIZE, threshold=best_thresh)
+    y_true = test_labels.values[config.WINDOW_SIZE:]
+    metrics_clean = calculate_metrics(y_true, preds_clean_all[1:])
+    
+    # Noisy evaluation
+    noisy_test = inject_gaussian_noise(test_data.values, scale=noise_scale)
+    preds_noisy_all = automata.predict_anomaly(noisy_test, window_size=config.WINDOW_SIZE, threshold=best_thresh)
+    metrics_noisy = calculate_metrics(y_true, preds_noisy_all[1:])
+    
+    return {
+        "orig_f1": float(metrics_clean["f1"]),
+        "orig_precision": float(metrics_clean["precision"]),
+        "orig_recall": float(metrics_clean["recall"]),
+        "orig_accuracy": float(metrics_clean["accuracy"]),
+        "noisy_f1": float(metrics_noisy["f1"]),
+        "noisy_precision": float(metrics_noisy["precision"]),
+        "noisy_recall": float(metrics_noisy["recall"]),
+        "noisy_accuracy": float(metrics_noisy["accuracy"])
+    }
+
+def run_multi_model_robustness_sweeps(noise_scales=[0.05, 0.1, 0.15, 0.2, 0.25]):
+    """
+    Coordinates multi-model and multi-dataset robustness evaluations.
+    """
+    pass
