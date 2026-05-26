@@ -128,3 +128,66 @@ def run_automata_skab_kfold(seed):
     save_results(results, "automata_metrics.csv")
     logger.info(f"--- Seed {seed} Overall SKAB Results: F1={avg_f1:.4f}, Accuracy={avg_acc:.4f}, Avg Train Time={avg_train_time:.2f}s ---")
     return results
+
+def run_automata_batadal_chronological(seed):
+    """
+    Runs chronological split training and evaluation on BATADAL for a specific seed.
+    Logs metrics and training/inference execution runtimes.
+    """
+    config = Config()
+    set_seed(seed)
+    
+    logger = setup_logger(f"Evaluate_Automata_BATADAL_seed{seed}", f"Automata_BATADAL_seed{seed}.log")
+    logger.info(f"--- Starting Chronological Evaluation for TimeSeriesAutomata on BATADAL with Seed {seed} ---")
+    
+    loader = DataLoader("BATADAL")
+    path = config.BATADAL_PATH
+    if os.path.isdir(path):
+        path = os.path.join(path, "batadal_training_2.csv")
+        
+    raw_data = loader.load_batadal(path)
+    scaled_data, _ = loader.preprocess(raw_data)
+    labels = loader.get_labels(raw_data)
+    
+    train_data, val_data, test_data = loader.split_chronological(pd.DataFrame(scaled_data))
+    train_labels, val_labels, test_labels = loader.split_chronological(pd.Series(labels))
+    
+    # Initialize TimeSeriesAutomata
+    automata = TimeSeriesAutomata(alphabet_size=config.ALPHABET_SIZE, word_size=4)
+    
+    # Train model & record training time
+    start_train = time.time()
+    automata.fit(train_data.values, window_size=config.WINDOW_SIZE)
+    end_train = time.time()
+    train_time = end_train - start_train
+    
+    # Threshold optimization on validation set
+    best_thresh, _ = find_best_threshold_automata(automata, val_data.values, val_labels.values, config.WINDOW_SIZE)
+    
+    # Evaluate test inference & record inference time
+    start_inf = time.time()
+    y_pred_all = automata.predict_anomaly(test_data.values, window_size=config.WINDOW_SIZE, threshold=best_thresh)
+    end_inf = time.time()
+    inf_time = end_inf - start_inf
+    
+    # Predict and compute metrics
+    y_true = test_labels.values[config.WINDOW_SIZE:]
+    y_pred = y_pred_all[1:]
+    
+    metrics = calculate_metrics(y_true, y_pred)
+    
+    results = {
+        "dataset": "BATADAL",
+        "model": "Automata",
+        "seed": seed,
+        "f1": float(metrics["f1"]),
+        "precision": float(metrics["precision"]),
+        "recall": float(metrics["recall"]),
+        "accuracy": float(metrics["accuracy"]),
+        "training_time_sec": float(train_time),
+        "inference_time_sec": float(inf_time)
+    }
+    
+    save_results(results, "automata_metrics.csv")
+    logger.info(f"BATADAL complete: F1={metrics['f1']:.4f}, Accuracy={metrics['accuracy']:.4f}, Train Time={train_time:.2f}s")
+    return results
