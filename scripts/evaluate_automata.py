@@ -191,3 +191,23 @@ def run_automata_batadal_chronological(seed):
     save_results(results, "automata_metrics.csv")
     logger.info(f"BATADAL complete: F1={metrics['f1']:.4f}, Accuracy={metrics['accuracy']:.4f}, Train Time={train_time:.2f}s")
     return results
+
+if __name__ == "__main__":
+    seeds = [42, 123, 2026, 7, 999]
+    metrics_file = "automata_metrics.csv"
+    
+    # Remove previous automata metrics file if it exists to have clean results
+    os.makedirs("results/metrics", exist_ok=True)
+    path = os.path.join("results/metrics", metrics_file)
+    if os.path.exists(path):
+        os.remove(path)
+        
+    for dataset in ["SKAB", "BATADAL"]:
+        for seed in seeds:
+            try:
+                if dataset == "SKAB":
+                    run_automata_skab_kfold(seed)
+                else:
+                    run_automata_batadal_chronological(seed)
+            except Exception as e:
+                print(f"Error evaluating Automata on {dataset} with seed {seed}: {e}")
