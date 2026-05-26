@@ -7,25 +7,22 @@ from utils.data_loader import DataLoader
 from utils.train_utils import load_model, predict
 from utils.metrics import calculate_metrics, save_results
 
-def evaluate_model(dataset_name, model_type):
+def evaluate_model_batadal_multi_seed(model_type, seed):
     config = Config()
-    loader = DataLoader(dataset_name)
-    if dataset_name == "SKAB":
-        raw_data = loader.load_skab(config.SKAB_PATH)
-    else:
-        path = config.BATADAL_PATH
-        if os.path.isdir(path):
-            path = os.path.join(path, "batadal_training_2.csv")
-        raw_data = loader.load_batadal(path)
+    loader = DataLoader("BATADAL")
+    path = config.BATADAL_PATH
+    if os.path.isdir(path):
+        path = os.path.join(path, "batadal_training_2.csv")
+    raw_data = loader.load_batadal(path)
     scaled_data, _ = loader.preprocess(raw_data)
     labels = loader.get_labels(raw_data)
     
-    _, _, test_data = loader.split_chronological(pd.DataFrame(scaled_data))
-    _, _, test_labels = loader.split_chronological(pd.Series(labels))
+    train_data, val_data, test_data = loader.split_chronological(pd.DataFrame(scaled_data))
+    train_labels, val_labels, test_labels = loader.split_chronological(pd.Series(labels))
     
-    _, _, test_loader = loader.get_dataloaders(
-        None, None, test_data.values,
-        None, None, test_labels.values
+    _, val_loader, test_loader = loader.get_dataloaders(
+        train_data.values, val_data.values, test_data.values,
+        train_labels.values, val_labels.values, test_labels.values
     )
     
     model = ModelFactory.get_model(
@@ -36,21 +33,32 @@ def evaluate_model(dataset_name, model_type):
         dropout=0.2,
         window_size=config.WINDOW_SIZE
     ).to(config.DEVICE)
-    model = load_model(model, f"checkpoints/{dataset_name}_{model_type}.pth", config.DEVICE)
     
-    y_pred = predict(model, test_loader, config.DEVICE)
-    # Calculate comprehensive evaluation metrics (Accuracy, Precision, Recall, and F1-score)
-    metrics = calculate_metrics(test_labels.values[config.WINDOW_SIZE:], (y_pred > 0.5).astype(int))
+    checkpoint_path = f"checkpoints/BATADAL_{model_type}_seed{seed}_best.pth"
+    if not os.path.exists(checkpoint_path):
+        raise FileNotFoundError(f"Checkpoint not found at: {checkpoint_path}")
+        
+    model = load_model(model, checkpoint_path, config.DEVICE)
+    model.eval()
     
-    results = {"dataset": dataset_name, "model": model_type, **metrics}
-    save_results(results, "final_metrics.csv")
-    print(f"Results for {model_type} on {dataset_name}: {metrics}")
+    from scripts.train_dl import find_best_threshold
+    best_thresh, _ = find_best_threshold(model, val_loader, val_labels.values, config.DEVICE)
+    
+    y_probs = predict(model, test_loader, config.DEVICE)
+    window_size = len(test_labels) - len(y_probs)
+    y_true = test_labels.values[window_size:]
+    y_pred = (y_probs >= best_thresh).astype(int)
+    
+    metrics = calculate_metrics(y_true, y_pred)
+    return metrics
 
 if __name__ == "__main__":
-    for dataset in ["SKAB", "BATADAL"]:
-        for m in ["LSTM", "GRU", "CNN"]:
+    seeds = [42, 123, 2026, 7, 999]
+    for m in ["LSTM", "GRU", "CNN"]:
+        for seed in seeds:
             try:
-                evaluate_model(dataset, m)
+                metrics = evaluate_model_batadal_multi_seed(m, seed)
+                print(f"Results for BATADAL {m} (Seed {seed}): {metrics}")
             except Exception as e:
-                print(f"Error evaluating {m} on {dataset}: {e}")
+                print(f"Error evaluating {m} on BATADAL with seed {seed}: {e}")
 
