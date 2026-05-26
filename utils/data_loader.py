@@ -318,6 +318,12 @@ class DataLoader:
 
 
     def split_by_group(self, data, n_splits=5, stratified=True):
+        num_groups = data['source_file'].nunique()
+        actual_splits = min(n_splits, num_groups)
+        if actual_splits < n_splits:
+            self.logger.warning(f"Requested splits {n_splits} is greater than number of groups {num_groups}. Adjusting splits to {actual_splits}.")
+            n_splits = actual_splits
+
         self.logger.info(f"Splitting data using {'StratifiedGroupKFold' if stratified else 'GroupKFold'} with {n_splits} splits.")
         if stratified:
             try:
