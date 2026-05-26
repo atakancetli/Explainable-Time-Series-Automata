@@ -1,11 +1,73 @@
 import torch
 import pandas as pd
+import numpy as np
 import os
 from configs.config import Config
 from models.model_factory import ModelFactory
 from utils.data_loader import DataLoader
 from utils.train_utils import load_model, predict
 from utils.metrics import calculate_metrics, save_results
+
+def evaluate_model_skab_kfold(model_type, seed):
+    config = Config()
+    loader = DataLoader("SKAB")
+    raw_data = loader.load_skab(config.SKAB_PATH)
+    
+    folds = loader.split_by_group(raw_data, n_splits=5, stratified=True)
+    
+    fold_metrics = []
+    
+    for fold_idx, (train_idx, val_idx) in enumerate(folds):
+        train_df = raw_data.iloc[train_idx]
+        val_df = raw_data.iloc[val_idx]
+        
+        loader_fold = DataLoader("SKAB")
+        loader_fold.fit(train_df)
+        val_scaled, _ = loader_fold.transform(val_df)
+        val_labels = loader_fold.get_labels(val_df)
+        
+        _, val_loader = loader_fold.get_fold_dataloaders(
+            val_scaled, val_scaled, val_labels, val_labels
+        )
+        
+        model = ModelFactory.get_model(
+            model_type, 
+            val_scaled.shape[1], 
+            config.HIDDEN_SIZE, 
+            config.NUM_LAYERS,
+            dropout=0.2,
+            window_size=config.WINDOW_SIZE
+        ).to(config.DEVICE)
+        
+        checkpoint_path = f"checkpoints/SKAB_{model_type}_seed{seed}_fold{fold_idx+1}_best.pth"
+        if not os.path.exists(checkpoint_path):
+            raise FileNotFoundError(f"Checkpoint not found at: {checkpoint_path}")
+            
+        model = load_model(model, checkpoint_path, config.DEVICE)
+        model.eval()
+        
+        from scripts.train_dl import find_best_threshold
+        best_thresh, _ = find_best_threshold(model, val_loader, val_labels, config.DEVICE)
+        
+        y_probs = predict(model, val_loader, config.DEVICE)
+        window_size = len(val_labels) - len(y_probs)
+        y_true = val_labels[window_size:]
+        y_pred = (y_probs >= best_thresh).astype(int)
+        
+        metrics = calculate_metrics(y_true, y_pred)
+        fold_metrics.append(metrics)
+        
+    avg_f1 = np.mean([m["f1"] for m in fold_metrics])
+    avg_prec = np.mean([m["precision"] for m in fold_metrics])
+    avg_rec = np.mean([m["recall"] for m in fold_metrics])
+    avg_acc = np.mean([m["accuracy"] for m in fold_metrics])
+    
+    return {
+        "f1": float(avg_f1),
+        "precision": float(avg_prec),
+        "recall": float(avg_rec),
+        "accuracy": float(avg_acc)
+    }
 
 def evaluate_model_batadal_multi_seed(model_type, seed):
     config = Config()
