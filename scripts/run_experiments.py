@@ -123,20 +123,162 @@ def evaluate_automata_batadal_robustness(seed, noise_scale=0.1):
 
 def evaluate_dl_skab_kfold_robustness(model_type, seed, noise_scale=0.1):
     """
-    Placeholder for Deep Learning models on SKAB with GroupKFold splits and noise.
+    Evaluates Deep Learning models on SKAB with 5-fold cross-validation and noise injection.
     """
+    config = Config()
+    set_seed(seed)
+    
+    loader = DataLoader("SKAB")
+    raw_data = loader.load_skab(config.SKAB_PATH)
+    
+    folds = loader.split_by_group(raw_data, n_splits=5, stratified=True)
+    
+    fold_metrics_clean = []
+    fold_metrics_noisy = []
+    
+    for fold_idx, (train_idx, val_idx) in enumerate(folds):
+        train_df = raw_data.iloc[train_idx]
+        val_df = raw_data.iloc[val_idx]
+        
+        loader_fold = DataLoader("SKAB")
+        loader_fold.fit(train_df)
+        val_scaled, _ = loader_fold.transform(val_df)
+        val_labels = loader_fold.get_labels(val_df)
+        
+        # Clean validation loader for threshold tuning & original metrics
+        _, val_loader_clean = loader_fold.get_fold_dataloaders(
+            val_scaled, val_scaled, val_labels, val_labels
+        )
+        
+        # Initialize model
+        model = ModelFactory.get_model(
+            model_type, 
+            val_scaled.shape[1], 
+            config.HIDDEN_SIZE, 
+            config.NUM_LAYERS,
+            dropout=0.2,
+            window_size=config.WINDOW_SIZE
+        ).to(config.DEVICE)
+        
+        checkpoint_path = f"checkpoints/SKAB_{model_type}_seed{seed}_fold{fold_idx+1}_best.pth"
+        if not os.path.exists(checkpoint_path):
+            raise FileNotFoundError(f"Checkpoint not found at: {checkpoint_path}")
+            
+        model = load_model(model, checkpoint_path, config.DEVICE)
+        model.eval()
+        
+        # Find best threshold on clean validation data
+        from scripts.train_dl import find_best_threshold
+        best_thresh, _ = find_best_threshold(model, val_loader_clean, val_labels, config.DEVICE)
+        
+        # Clean predictions
+        y_probs_clean = predict(model, val_loader_clean, config.DEVICE)
+        window_size = len(val_labels) - len(y_probs_clean)
+        y_true = val_labels[window_size:]
+        y_pred_clean = (y_probs_clean >= best_thresh).astype(int)
+        fold_metrics_clean.append(calculate_metrics(y_true, y_pred_clean))
+        
+        # Noisy predictions
+        noisy_val_scaled = inject_gaussian_noise(val_scaled, scale=noise_scale)
+        _, val_loader_noisy = loader_fold.get_fold_dataloaders(
+            noisy_val_scaled, noisy_val_scaled, val_labels, val_labels
+        )
+        y_probs_noisy = predict(model, val_loader_noisy, config.DEVICE)
+        y_pred_noisy = (y_probs_noisy >= best_thresh).astype(int)
+        fold_metrics_noisy.append(calculate_metrics(y_true, y_pred_noisy))
+        
+    avg_f1_clean = np.mean([m["f1"] for m in fold_metrics_clean])
+    avg_prec_clean = np.mean([m["precision"] for m in fold_metrics_clean])
+    avg_rec_clean = np.mean([m["recall"] for m in fold_metrics_clean])
+    avg_acc_clean = np.mean([m["accuracy"] for m in fold_metrics_clean])
+    
+    avg_f1_noisy = np.mean([m["f1"] for m in fold_metrics_noisy])
+    avg_prec_noisy = np.mean([m["precision"] for m in fold_metrics_noisy])
+    avg_rec_noisy = np.mean([m["recall"] for m in fold_metrics_noisy])
+    avg_acc_noisy = np.mean([m["accuracy"] for m in fold_metrics_noisy])
+    
     return {
-        "orig_f1": 0.0, "orig_precision": 0.0, "orig_recall": 0.0, "orig_accuracy": 0.0,
-        "noisy_f1": 0.0, "noisy_precision": 0.0, "noisy_recall": 0.0, "noisy_accuracy": 0.0
+        "orig_f1": float(avg_f1_clean),
+        "orig_precision": float(avg_prec_clean),
+        "orig_recall": float(avg_rec_clean),
+        "orig_accuracy": float(avg_acc_clean),
+        "noisy_f1": float(avg_f1_noisy),
+        "noisy_precision": float(avg_prec_noisy),
+        "noisy_recall": float(avg_rec_noisy),
+        "noisy_accuracy": float(avg_acc_noisy)
     }
 
 def evaluate_dl_batadal_robustness(model_type, seed, noise_scale=0.1):
     """
-    Placeholder for Deep Learning models on BATADAL chronological splits with noise.
+    Evaluates Deep Learning models on BATADAL chronological split with noise injection.
     """
+    config = Config()
+    set_seed(seed)
+    
+    loader = DataLoader("BATADAL")
+    path = config.BATADAL_PATH
+    if os.path.isdir(path):
+        path = os.path.join(path, "batadal_training_2.csv")
+    raw_data = loader.load_batadal(path)
+    scaled_data, _ = loader.preprocess(raw_data)
+    labels = loader.get_labels(raw_data)
+    
+    train_data, val_data, test_data = loader.split_chronological(pd.DataFrame(scaled_data))
+    train_labels, val_labels, test_labels = loader.split_chronological(pd.Series(labels))
+    
+    # Initialize clean validation and test loaders
+    _, val_loader, test_loader_clean = loader.get_dataloaders(
+        train_data.values, val_data.values, test_data.values,
+        train_labels.values, val_labels.values, test_labels.values
+    )
+    
+    # Initialize model
+    model = ModelFactory.get_model(
+        model_type, 
+        scaled_data.shape[1], 
+        config.HIDDEN_SIZE, 
+        config.NUM_LAYERS,
+        dropout=0.2,
+        window_size=config.WINDOW_SIZE
+    ).to(config.DEVICE)
+    
+    checkpoint_path = f"checkpoints/BATADAL_{model_type}_seed{seed}_best.pth"
+    if not os.path.exists(checkpoint_path):
+        raise FileNotFoundError(f"Checkpoint not found at: {checkpoint_path}")
+        
+    model = load_model(model, checkpoint_path, config.DEVICE)
+    model.eval()
+    
+    # Find best threshold on clean validation data
+    from scripts.train_dl import find_best_threshold
+    best_thresh, _ = find_best_threshold(model, val_loader, val_labels.values, config.DEVICE)
+    
+    # Original evaluation
+    y_probs_clean = predict(model, test_loader_clean, config.DEVICE)
+    window_size = len(test_labels) - len(y_probs_clean)
+    y_true = test_labels.values[window_size:]
+    y_pred_clean = (y_probs_clean >= best_thresh).astype(int)
+    metrics_clean = calculate_metrics(y_true, y_pred_clean)
+    
+    # Noisy evaluation
+    noisy_test_data = inject_gaussian_noise(test_data.values, scale=noise_scale)
+    _, _, test_loader_noisy = loader.get_dataloaders(
+        train_data.values, val_data.values, noisy_test_data,
+        train_labels.values, val_labels.values, test_labels.values
+    )
+    y_probs_noisy = predict(model, test_loader_noisy, config.DEVICE)
+    y_pred_noisy = (y_probs_noisy >= best_thresh).astype(int)
+    metrics_noisy = calculate_metrics(y_true, y_pred_noisy)
+    
     return {
-        "orig_f1": 0.0, "orig_precision": 0.0, "orig_recall": 0.0, "orig_accuracy": 0.0,
-        "noisy_f1": 0.0, "noisy_precision": 0.0, "noisy_recall": 0.0, "noisy_accuracy": 0.0
+        "orig_f1": float(metrics_clean["f1"]),
+        "orig_precision": float(metrics_clean["precision"]),
+        "orig_recall": float(metrics_clean["recall"]),
+        "orig_accuracy": float(metrics_clean["accuracy"]),
+        "noisy_f1": float(metrics_noisy["f1"]),
+        "noisy_precision": float(metrics_noisy["precision"]),
+        "noisy_recall": float(metrics_noisy["recall"]),
+        "noisy_accuracy": float(metrics_noisy["accuracy"])
     }
 
 def run_multi_model_robustness_sweeps(noise_scales=[0.05, 0.1, 0.15, 0.2, 0.25]):
