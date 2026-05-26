@@ -39,6 +39,7 @@ def evaluate_model(dataset_name, model_type):
     model = load_model(model, f"checkpoints/{dataset_name}_{model_type}.pth", config.DEVICE)
     
     y_pred = predict(model, test_loader, config.DEVICE)
+    # Calculate comprehensive evaluation metrics (Accuracy, Precision, Recall, and F1-score)
     metrics = calculate_metrics(test_labels.values[config.WINDOW_SIZE:], (y_pred > 0.5).astype(int))
     
     results = {"dataset": dataset_name, "model": model_type, **metrics}
