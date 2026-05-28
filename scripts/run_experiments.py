@@ -513,9 +513,83 @@ def run_cross_dataset_sweeps():
                 
     return all_results
 
+def compile_academic_tables():
+    """
+    Compiles and prints the academic markdown tables for the report.
+    """
+    print("\n" + "="*80)
+    print("ACADEMIC EXPERIMENT RESULTS REPORT COMPILATION")
+    print("="*80)
+    
+    # 1. Table 2: Robustness Anomaly Detection (averaging across noise scales)
+    robustness_path = "results/metrics/robustness_sweep_results.csv"
+    if os.path.exists(robustness_path):
+        df_rob = pd.read_csv(robustness_path)
+        print("\n### Tablo 2: Gürültü Etkisi Analizi (Ortalama F1-Score)")
+        print("| Model | Veri Seti | Orijinal F1 | Gürültü F1 (0.05) | Gürültü F1 (0.1) | Gürültü F1 (0.15) | Gürültü F1 (0.2) | Gürültü F1 (0.25) |")
+        print("| --- | --- | --- | --- | --- | --- | --- | --- |")
+        
+        for dataset in ["SKAB", "BATADAL"]:
+            for model in ["Automata", "LSTM", "GRU", "CNN"]:
+                sub = df_rob[(df_rob['dataset'] == dataset) & (df_rob['model'] == model)]
+                if not sub.empty:
+                    # Get baseline from noise scale 0.05's orig_f1
+                    orig_f1 = sub.iloc[0]['orig_f1']
+                    f1s = []
+                    for scale in [0.05, 0.1, 0.15, 0.2, 0.25]:
+                        row = sub[np.isclose(sub['noise_scale'], scale)]
+                        if not row.empty:
+                            f1s.append(f"{row.iloc[0]['noisy_f1']:.4f}")
+                        else:
+                            f1s.append("-")
+                    print(f"| {model} | {dataset} | {orig_f1:.4f} | " + " | ".join(f1s) + " |")
+                    
+    # 2. Table 3: Cross-Dataset Generalizability Matrix
+    cross_path = "results/metrics/cross_dataset_results.csv"
+    if os.path.exists(cross_path):
+        df_cross = pd.read_csv(cross_path)
+        print("\n### Tablo 3: Cross-Dataset Performans Karşılaştırması (F1-Score)")
+        
+        # We need a cross matrix for each model
+        for model in ["Automata", "LSTM", "GRU", "CNN"]:
+            print(f"\n**Model: {model}**")
+            print("| Train \\ Test | SKAB | BATADAL |")
+            print("| --- | --- | --- |")
+            
+            # Row 1: Train: SKAB
+            skab_skab_val = "-"
+            # Load in-domain metrics if they exist in robustness
+            if os.path.exists(robustness_path):
+                df_rob = pd.read_csv(robustness_path)
+                sub_id = df_rob[(df_rob['dataset'] == 'SKAB') & (df_rob['model'] == model)]
+                if not sub_id.empty:
+                    skab_skab_val = f"{sub_id.iloc[0]['orig_f1']:.4f}"
+            skab_batadal_val = "-"
+            row_sb = df_cross[(df_cross['train_dataset'] == 'SKAB') & (df_cross['test_dataset'] == 'BATADAL') & (df_cross['model'] == model)]
+            if not row_sb.empty:
+                skab_batadal_val = f"{row_sb.iloc[0]['f1']:.4f}"
+            print(f"| Train: SKAB | {skab_skab_val} | {skab_batadal_val} |")
+            
+            # Row 2: Train: BATADAL
+            batadal_skab_val = "-"
+            row_bs = df_cross[(df_cross['train_dataset'] == 'BATADAL') & (df_cross['test_dataset'] == 'SKAB') & (df_cross['model'] == model)]
+            if not row_bs.empty:
+                batadal_skab_val = f"{row_bs.iloc[0]['f1']:.4f}"
+            batadal_batadal_val = "-"
+            if os.path.exists(robustness_path):
+                sub_id2 = df_rob[(df_rob['dataset'] == 'BATADAL') & (df_rob['model'] == model)]
+                if not sub_id2.empty:
+                    batadal_batadal_val = f"{sub_id2.iloc[0]['orig_f1']:.4f}"
+            print(f"| Train: BATADAL | {batadal_skab_val} | {batadal_batadal_val} |")
+            
+    print("\n" + "="*80)
+
 if __name__ == "__main__":
     print("Running Robustness Sweeps...")
     run_multi_model_robustness_sweeps()
     print("\nRunning Cross-Dataset Sweeps...")
     run_cross_dataset_sweeps()
+    print("\nCompiling Academic Tables...")
+    compile_academic_tables()
+
 
