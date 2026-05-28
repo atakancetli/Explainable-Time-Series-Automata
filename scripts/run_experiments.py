@@ -121,7 +121,69 @@ def evaluate_automata_batadal_robustness(seed, noise_scale=0.1):
         "noisy_accuracy": float(metrics_noisy["accuracy"])
     }
 
+def evaluate_cross_dataset_automata(train_dataset, test_dataset, seed):
+    """
+    Evaluates TimeSeriesAutomata trained on train_dataset and tested on test_dataset.
+    """
+    config = Config()
+    set_seed(seed)
+    
+    # 1. Load and preprocess training data
+    loader_train = DataLoader(train_dataset)
+    if train_dataset == "SKAB":
+        raw_train = loader_train.load_skab(config.SKAB_PATH)
+        scaled_train, _ = loader_train.preprocess(raw_train, fit_scaler=True)
+    else:
+        path = os.path.join(config.BATADAL_PATH, "batadal_training_2.csv")
+        raw_train = loader_train.load_batadal(path)
+        scaled_train, _ = loader_train.preprocess(raw_train, fit_scaler=True)
+        # Use full BATADAL training split for robust training
+        scaled_train_df = pd.DataFrame(scaled_train)
+        scaled_train = scaled_train_df.iloc[:int(len(scaled_train)*config.TRAIN_RATIO)].values
+        
+    automata = TimeSeriesAutomata(alphabet_size=config.ALPHABET_SIZE, word_size=4)
+    automata.fit(scaled_train, window_size=config.WINDOW_SIZE)
+    
+    # 2. Load and preprocess test data
+    loader_test = DataLoader(test_dataset)
+    if test_dataset == "SKAB":
+        raw_test = loader_test.load_skab(config.SKAB_PATH)
+        scaled_test_all, _ = loader_test.preprocess(raw_test, fit_scaler=True)
+        # Use validation and test splits from GroupKFold or chronological
+        test_labels_all = loader_test.get_labels(raw_test)
+        train_len = int(len(scaled_test_all) * config.TRAIN_RATIO)
+        val_len = int(len(scaled_test_all) * config.VAL_RATIO)
+        
+        val_data = scaled_test_all[train_len : train_len + val_len]
+        val_labels = test_labels_all[train_len : train_len + val_len]
+        test_data = scaled_test_all[train_len + val_len :]
+        test_labels = test_labels_all[train_len + val_len :]
+    else:
+        path = os.path.join(config.BATADAL_PATH, "batadal_training_2.csv")
+        raw_test = loader_test.load_batadal(path)
+        scaled_test_all, _ = loader_test.preprocess(raw_test, fit_scaler=True)
+        test_labels_all = loader_test.get_labels(raw_test)
+        
+        train_data_df, val_data_df, test_data_df = loader_test.split_chronological(pd.DataFrame(scaled_test_all))
+        train_labels_df, val_labels_df, test_labels_df = loader_test.split_chronological(pd.Series(test_labels_all))
+        
+        val_data = val_data_df.values
+        val_labels = val_labels_df.values
+        test_data = test_data_df.values
+        test_labels = test_labels_df.values
+        
+    # Optimize threshold on the test dataset's validation split
+    from scripts.evaluate_automata import find_best_threshold_automata
+    best_thresh, _ = find_best_threshold_automata(automata, val_data, val_labels, config.WINDOW_SIZE)
+    
+    # Predict anomalies on test split
+    preds = automata.predict_anomaly(test_data, window_size=config.WINDOW_SIZE, threshold=best_thresh)
+    y_true = test_labels[config.WINDOW_SIZE:]
+    metrics = calculate_metrics(y_true, preds[1:])
+    return metrics
+
 def evaluate_dl_skab_kfold_robustness(model_type, seed, noise_scale=0.1):
+
     """
     Evaluates Deep Learning models on SKAB with 5-fold cross-validation and noise injection.
     """
