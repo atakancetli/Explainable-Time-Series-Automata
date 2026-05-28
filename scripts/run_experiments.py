@@ -182,7 +182,73 @@ def evaluate_cross_dataset_automata(train_dataset, test_dataset, seed):
     metrics = calculate_metrics(y_true, preds[1:])
     return metrics
 
+def evaluate_cross_dataset_dl(model_type, train_dataset, test_dataset, seed):
+    """
+    Evaluates Deep Learning model trained on train_dataset and tested on test_dataset.
+    """
+    config = Config()
+    set_seed(seed)
+    
+    # 1. Load and preprocess test data
+    loader_test = DataLoader(test_dataset)
+    if test_dataset == "SKAB":
+        raw_test = loader_test.load_skab(config.SKAB_PATH)
+        scaled_test_all, _ = loader_test.preprocess(raw_test, fit_scaler=True)
+        test_labels_all = loader_test.get_labels(raw_test)
+        
+        # Chronological splits
+        train_data, val_data, test_data = loader_test.split_chronological(pd.DataFrame(scaled_test_all))
+        train_labels, val_labels, test_labels = loader_test.split_chronological(pd.Series(test_labels_all))
+    else:
+        path = os.path.join(config.BATADAL_PATH, "batadal_training_2.csv")
+        raw_test = loader_test.load_batadal(path)
+        scaled_test_all, _ = loader_test.preprocess(raw_test, fit_scaler=True)
+        test_labels_all = loader_test.get_labels(raw_test)
+        
+        train_data, val_data, test_data = loader_test.split_chronological(pd.DataFrame(scaled_test_all))
+        train_labels, val_labels, test_labels = loader_test.split_chronological(pd.Series(test_labels_all))
+        
+    _, val_loader, test_loader = loader_test.get_dataloaders(
+        train_data.values, val_data.values, test_data.values,
+        train_labels.values, val_labels.values, test_labels.values
+    )
+    
+    # 2. Initialize and load model
+    model = ModelFactory.get_model(
+        model_type, 
+        scaled_test_all.shape[1], 
+        config.HIDDEN_SIZE, 
+        config.NUM_LAYERS,
+        dropout=0.2,
+        window_size=config.WINDOW_SIZE
+    ).to(config.DEVICE)
+    
+    if train_dataset == "SKAB":
+        checkpoint_path = f"checkpoints/SKAB_{model_type}_seed{seed}_fold1_best.pth"
+    else:
+        checkpoint_path = f"checkpoints/BATADAL_{model_type}_seed{seed}_best.pth"
+        
+    if not os.path.exists(checkpoint_path):
+        raise FileNotFoundError(f"Checkpoint not found at: {checkpoint_path}")
+        
+    model = load_model(model, checkpoint_path, config.DEVICE)
+    model.eval()
+    
+    # Find best threshold on the test dataset's validation split (clean)
+    from scripts.train_dl import find_best_threshold
+    best_thresh, _ = find_best_threshold(model, val_loader, val_labels.values, config.DEVICE)
+    
+    # Predict anomalies on test split
+    y_probs = predict(model, test_loader, config.DEVICE)
+    window_size = len(test_labels) - len(y_probs)
+    y_true = test_labels.values[window_size:]
+    y_pred = (y_probs >= best_thresh).astype(int)
+    
+    metrics = calculate_metrics(y_true, y_pred)
+    return metrics
+
 def evaluate_dl_skab_kfold_robustness(model_type, seed, noise_scale=0.1):
+
 
     """
     Evaluates Deep Learning models on SKAB with 5-fold cross-validation and noise injection.
