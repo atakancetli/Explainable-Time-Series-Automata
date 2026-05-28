@@ -464,5 +464,58 @@ def run_multi_model_robustness_sweeps(noise_scales=[0.05, 0.1, 0.15, 0.2, 0.25])
     
     return all_results
 
+def run_cross_dataset_sweeps():
+    """
+    Orchestrates cross-dataset validation experiments.
+    """
+    seeds = [42, 123, 2026, 7, 999]
+    metrics_file = "cross_dataset_results.csv"
+    os.makedirs("results/metrics", exist_ok=True)
+    path = os.path.join("results/metrics", metrics_file)
+    if os.path.exists(path):
+        os.remove(path)
+        
+    all_results = []
+    
+    # We want cross-dataset: SKAB->BATADAL and BATADAL->SKAB
+    dataset_pairs = [
+        ("SKAB", "BATADAL"),
+        ("BATADAL", "SKAB")
+    ]
+    
+    for train_ds, test_ds in dataset_pairs:
+        for model in ["Automata", "LSTM", "GRU", "CNN"]:
+            print(f"Sweeping cross-dataset for Train: {train_ds} -> Test: {test_ds} | Model: {model}...")
+            run_metrics = []
+            for seed in seeds:
+                try:
+                    if model == "Automata":
+                        metrics = evaluate_cross_dataset_automata(train_ds, test_ds, seed)
+                    else:
+                        metrics = evaluate_cross_dataset_dl(model, train_ds, test_ds, seed)
+                    run_metrics.append(metrics)
+                except Exception as e:
+                    print(f"Error in cross-dataset evaluation of {model} from {train_ds} to {test_ds} with seed {seed}: {e}")
+                    
+            if len(run_metrics) > 0:
+                avg_metrics = {
+                    "train_dataset": train_ds,
+                    "test_dataset": test_ds,
+                    "model": model,
+                    "f1": float(np.mean([m["f1"] for m in run_metrics])),
+                    "precision": float(np.mean([m["precision"] for m in run_metrics])),
+                    "recall": float(np.mean([m["recall"] for m in run_metrics])),
+                    "accuracy": float(np.mean([m["accuracy"] for m in run_metrics]))
+                }
+                save_results(avg_metrics, metrics_file)
+                all_results.append(avg_metrics)
+                print(f"==> Avg Cross-Dataset Result for {train_ds} -> {test_ds} | {model}: F1 = {avg_metrics['f1']:.4f} | Accuracy = {avg_metrics['accuracy']:.4f}")
+                
+    return all_results
+
 if __name__ == "__main__":
+    print("Running Robustness Sweeps...")
     run_multi_model_robustness_sweeps()
+    print("\nRunning Cross-Dataset Sweeps...")
+    run_cross_dataset_sweeps()
+
