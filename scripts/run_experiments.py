@@ -477,6 +477,114 @@ def evaluate_dl_batadal_robustness(model_type, seed, noise_scale=0.1):
         "noisy_accuracy": float(metrics_noisy["accuracy"])
     }
 
+def get_model_predictions(model_type, seed, dataset_name):
+    """
+    Returns (predictions, labels) for a given model, seed, and dataset on the clean validation/test splits.
+    Ensures identical scaling, PCA, chronological folds, and threshold optimizations to maintain consistency.
+    """
+    config = Config()
+    set_seed(seed)
+    
+    all_preds = []
+    all_labels = []
+    
+    if dataset_name == "SKAB":
+        loader = DataLoader("SKAB")
+        raw_data = loader.load_skab(config.SKAB_PATH)
+        folds = loader.split_by_group(raw_data, n_splits=5, stratified=True)
+        
+        for fold_idx, (train_idx, val_idx) in enumerate(folds):
+            train_df = raw_data.iloc[train_idx]
+            val_df = raw_data.iloc[val_idx]
+            
+            loader_fold = DataLoader("SKAB")
+            train_scaled, _ = loader_fold.preprocess(train_df, fit_scaler=True)
+            val_scaled, _ = loader_fold.transform(val_df)
+            
+            train_labels = loader_fold.get_labels(train_df)
+            val_labels = loader_fold.get_labels(val_df)
+            
+            if model_type == "Automata":
+                automata = TimeSeriesAutomata(alphabet_size=config.ALPHABET_SIZE, word_size=4)
+                automata.fit(train_scaled, window_size=config.WINDOW_SIZE)
+                from scripts.evaluate_automata import find_best_threshold_automata
+                best_thresh, _ = find_best_threshold_automata(automata, val_scaled, val_labels, config.WINDOW_SIZE)
+                preds = automata.predict_anomaly(val_scaled, window_size=config.WINDOW_SIZE, threshold=best_thresh)
+                y_true = val_labels[config.WINDOW_SIZE:]
+                y_pred = preds[1:]
+            else:
+                _, val_loader_clean = loader_fold.get_fold_dataloaders(
+                    val_scaled, val_scaled, val_labels, val_labels
+                )
+                model = ModelFactory.get_model(
+                    model_type, 
+                    val_scaled.shape[1], 
+                    config.HIDDEN_SIZE, 
+                    config.NUM_LAYERS,
+                    dropout=0.2,
+                    window_size=config.WINDOW_SIZE
+                ).to(config.DEVICE)
+                checkpoint_path = f"checkpoints/SKAB_{model_type}_seed{seed}_fold{fold_idx+1}_best.pth"
+                model = load_model(model, checkpoint_path, config.DEVICE)
+                model.eval()
+                from scripts.train_dl import find_best_threshold
+                best_thresh, _ = find_best_threshold(model, val_loader_clean, val_labels, config.DEVICE)
+                y_probs = predict(model, val_loader_clean, config.DEVICE)
+                window_size = len(val_labels) - len(y_probs)
+                y_true = val_labels[window_size:]
+                y_pred = (y_probs >= best_thresh).astype(int)
+                
+            all_preds.extend(y_pred)
+            all_labels.extend(y_true)
+            
+    else:  # BATADAL
+        loader = DataLoader("BATADAL")
+        path = config.BATADAL_PATH
+        if os.path.isdir(path):
+            path = os.path.join(path, "batadal_training_2.csv")
+        raw_data = loader.load_batadal(path)
+        scaled_data, _ = loader.preprocess(raw_data)
+        labels = loader.get_labels(raw_data)
+        
+        train_data, val_data, test_data = loader.split_chronological(pd.DataFrame(scaled_data))
+        train_labels, val_labels, test_labels = loader.split_chronological(pd.Series(labels))
+        
+        if model_type == "Automata":
+            automata = TimeSeriesAutomata(alphabet_size=config.ALPHABET_SIZE, word_size=4)
+            automata.fit(train_data.values, window_size=config.WINDOW_SIZE)
+            from scripts.evaluate_automata import find_best_threshold_automata
+            best_thresh, _ = find_best_threshold_automata(automata, val_data.values, val_labels.values, config.WINDOW_SIZE)
+            preds = automata.predict_anomaly(test_data.values, window_size=config.WINDOW_SIZE, threshold=best_thresh)
+            y_true = test_labels.values[config.WINDOW_SIZE:]
+            y_pred = preds[1:]
+        else:
+            _, val_loader, test_loader_clean = loader.get_dataloaders(
+                train_data.values, val_data.values, test_data.values,
+                train_labels.values, val_labels.values, test_labels.values
+            )
+            model = ModelFactory.get_model(
+                model_type, 
+                scaled_data.shape[1], 
+                config.HIDDEN_SIZE, 
+                config.NUM_LAYERS,
+                dropout=0.2,
+                window_size=config.WINDOW_SIZE
+            ).to(config.DEVICE)
+            checkpoint_path = f"checkpoints/BATADAL_{model_type}_seed{seed}_best.pth"
+            model = load_model(model, checkpoint_path, config.DEVICE)
+            model.eval()
+            from scripts.train_dl import find_best_threshold
+            best_thresh, _ = find_best_threshold(model, val_loader, val_labels.values, config.DEVICE)
+            y_probs = predict(model, test_loader_clean, config.DEVICE)
+            window_size = len(test_labels) - len(y_probs)
+            y_true = test_labels.values[window_size:]
+            y_pred = (y_probs >= best_thresh).astype(int)
+            
+        all_preds = y_pred
+        all_labels = y_true
+        
+    return np.array(all_preds), np.array(all_labels)
+
 def run_multi_model_robustness_sweeps(noise_scales=[0.05, 0.1, 0.15, 0.2, 0.25]):
     """
     Coordinates multi-model and multi-dataset robustness evaluations.
