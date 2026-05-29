@@ -64,3 +64,52 @@ def calculate_mcnemar_test(preds_A, preds_B, y_true):
         "p_value": p_value,
         "significant": bool(significant)
     }
+
+def calculate_wilcoxon_test(scores_A, scores_B):
+    """
+    Computes Wilcoxon signed-rank significance test between scores of two models.
+    
+    Parameters:
+    scores_A (list or np.ndarray): Scores of model A across seeds/folds.
+    scores_B (list or np.ndarray): Scores of model B across seeds/folds.
+    
+    Returns:
+    dict: statistic, p_value, and significance flag.
+    """
+    scores_A = np.array(scores_A)
+    scores_B = np.array(scores_B)
+    
+    if len(scores_A) != len(scores_B):
+        raise ValueError("Scores must have identical length.")
+        
+    diff = scores_A - scores_B
+    
+    # Wilcoxon signed-rank requires all differences to be non-zero
+    # and has safety constraints. If differences are completely zero:
+    if np.all(diff == 0):
+        return {
+            "statistic": 0.0,
+            "p_value": 1.0,
+            "significant": False,
+            "note": "All score differences are zero."
+        }
+        
+    try:
+        # Use Wilcoxon signed-rank test
+        # zero_method="pratt" is standard to handle zero differences
+        statistic, p_value = stats.wilcoxon(scores_A, scores_B, zero_method="pratt")
+        significant = p_value < 0.05
+        return {
+            "statistic": float(statistic),
+            "p_value": float(p_value),
+            "significant": bool(significant)
+        }
+    except Exception as e:
+        # Handle cases where sample size is too small or other stats exceptions
+        return {
+            "statistic": 0.0,
+            "p_value": 1.0,
+            "significant": False,
+            "note": f"Wilcoxon test error: {str(e)}"
+        }
+
