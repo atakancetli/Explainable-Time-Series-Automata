@@ -247,7 +247,20 @@ def evaluate_cross_dataset_dl(model_type, train_dataset, test_dataset, seed):
     metrics = calculate_metrics(y_true, y_pred)
     return metrics
 
+def evaluate_automata_window_sensitivity(window_size, seed, dataset_name="BATADAL"):
+    """
+    Wrapper for window size parameter sensitivity analysis.
+    """
+    return evaluate_automata_sensitivity("window_size", window_size, seed, dataset_name)
+
+def evaluate_automata_alphabet_sensitivity(alphabet_size, seed, dataset_name="BATADAL"):
+    """
+    Wrapper for alphabet size parameter sensitivity analysis.
+    """
+    return evaluate_automata_sensitivity("alphabet_size", alphabet_size, seed, dataset_name)
+
 def evaluate_automata_sensitivity(param_name, param_value, seed, dataset_name="BATADAL"):
+
     """
     Fits and evaluates TimeSeriesAutomata on dataset_name with param_name set to param_value.
     Holding other parameters at standard defaults (window_size=10, alphabet_size=5).
