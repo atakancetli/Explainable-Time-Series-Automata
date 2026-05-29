@@ -301,7 +301,7 @@ def evaluate_automata_sensitivity(param_name, param_value, seed, dataset_name="B
         test_data = test_data_df.values
         test_labels = test_labels_df.values
         
-    automata = TimeSeriesAutomata(alphabet_size=a_size, word_size=4)
+    automata = TimeSeriesAutomata(alphabet_size=a_size, word_size=min(4, w_size))
     automata.fit(train_data, window_size=w_size)
     
     # Optimize threshold on the validation split
@@ -696,6 +696,37 @@ def compile_academic_tables():
                 if not sub_id2.empty:
                     batadal_batadal_val = f"{sub_id2.iloc[0]['orig_f1']:.4f}"
             print(f"| Train: BATADAL | {batadal_skab_val} | {batadal_batadal_val} |")
+            
+    # 3. Table 4: Parameter Sensitivity Matrix
+    sensitivity_path = "results/metrics/sensitivity_results.csv"
+    if os.path.exists(sensitivity_path):
+        df_sens = pd.read_csv(sensitivity_path)
+        print("\n### Tablo 4: TimeSeriesAutomata Parametre Duyarlılık Analizi (Ortalama F1-Score)")
+        print("| Veri Seti | Parametre | Değer = 3 | Değer = 4 | Değer = 5 | Değer = 6 |")
+        print("| --- | --- | --- | --- | --- | --- |")
+        
+        for dataset in ["SKAB", "BATADAL"]:
+            # Row 1: window_size
+            sub_w = df_sens[(df_sens['dataset'] == dataset) & (df_sens['parameter'] == 'window_size')]
+            w_vals = []
+            for val in [3, 4, 5, 6]:
+                row = sub_w[sub_w['value'] == val]
+                if not row.empty:
+                    w_vals.append(f"{row.iloc[0]['f1']:.4f}")
+                else:
+                    w_vals.append("-")
+            print(f"| {dataset} | Pencere Boyutu (w) | " + " | ".join(w_vals) + " |")
+            
+            # Row 2: alphabet_size
+            sub_a = df_sens[(df_sens['dataset'] == dataset) & (df_sens['parameter'] == 'alphabet_size')]
+            a_vals = []
+            for val in [3, 4, 5, 6]:
+                row = sub_a[sub_a['value'] == val]
+                if not row.empty:
+                    a_vals.append(f"{row.iloc[0]['f1']:.4f}")
+                else:
+                    a_vals.append("-")
+            print(f"| {dataset} | Alfabe Boyutu (a) | " + " | ".join(a_vals) + " |")
             
     print("\n" + "="*80)
 
