@@ -736,6 +736,85 @@ def run_sensitivity_sweeps():
                     
     return all_results
 
+def run_statistical_tests():
+    """
+    Orchestrates McNemar and Wilcoxon statistical significance tests comparing
+    the symbolic Automata model with deep learning baselines.
+    """
+    import json
+    from utils.statistics import calculate_mcnemar_test, calculate_wilcoxon_test
+    
+    os.makedirs("results/metrics", exist_ok=True)
+    seeds = [42, 123, 2026, 7, 999]
+    models = ["Automata", "LSTM", "GRU", "CNN"]
+    datasets = ["SKAB", "BATADAL"]
+    
+    results = {}
+    
+    for dataset in datasets:
+        results[dataset] = {}
+        
+        # 1. Fetch predictions, labels, and F1-scores across all seeds
+        model_predictions = {}
+        model_labels = {}
+        model_seed_f1s = {}
+        
+        for model in models:
+            model_predictions[model] = []
+            model_labels[model] = []
+            model_seed_f1s[model] = []
+            
+            for seed in seeds:
+                try:
+                    preds, labels = get_model_predictions(model, seed, dataset)
+                    # For McNemar, concatenate samples across all seeds
+                    model_predictions[model].extend(preds)
+                    model_labels[model].extend(labels)
+                    
+                    # For Wilcoxon, compute F1-score for each seed split
+                    seed_metrics = calculate_metrics(labels, preds)
+                    model_seed_f1s[model].append(seed_metrics["f1"])
+                except Exception as e:
+                    print(f"Error fetching predictions for {model} on {dataset} seed {seed}: {e}")
+                    
+        # 2. Pairwise model comparisons
+        results[dataset]["comparisons"] = {}
+        
+        # Pair each model with all other models
+        for i in range(len(models)):
+            for j in range(i + 1, len(models)):
+                modA = models[i]
+                modB = models[j]
+                pair_name = f"{modA}_vs_{modB}"
+                
+                # Check if we have valid prediction lists
+                preds_A = model_predictions[modA]
+                preds_B = model_predictions[modB]
+                labels_true = model_labels[modA]
+                
+                if len(preds_A) > 0 and len(preds_B) > 0:
+                    # McNemar Test on pooled prediction samples
+                    mcnemar_res = calculate_mcnemar_test(preds_A, preds_B, labels_true)
+                    
+                    # Wilcoxon Test on seed-level F1 scores
+                    f1s_A = model_seed_f1s[modA]
+                    f1s_B = model_seed_f1s[modB]
+                    wilcoxon_res = calculate_wilcoxon_test(f1s_A, f1s_B)
+                    
+                    results[dataset]["comparisons"][pair_name] = {
+                        "mcnemar": mcnemar_res,
+                        "wilcoxon": wilcoxon_res
+                    }
+                    print(f"==> Stats for {dataset} | {modA} vs {modB}: "
+                          f"McNemar p={mcnemar_res['p_value']:.4f} (Sig={mcnemar_res['significant']}) | "
+                          f"Wilcoxon p={wilcoxon_res['p_value']:.4f}")
+                    
+    # Save to JSON
+    with open("results/metrics/statistical_results.json", "w") as f:
+        json.dump(results, f, indent=4)
+        
+    return results
+
 def compile_academic_tables():
     """
     Compiles and prints the academic markdown tables for the report.
@@ -845,6 +924,8 @@ if __name__ == "__main__":
     run_cross_dataset_sweeps()
     print("\nRunning Parameter Sensitivity Sweeps...")
     run_sensitivity_sweeps()
+    print("\nRunning Statistical Significance Tests...")
+    run_statistical_tests()
     print("\nCompiling Academic Tables...")
     compile_academic_tables()
 
