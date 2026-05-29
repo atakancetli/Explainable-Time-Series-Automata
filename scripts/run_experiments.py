@@ -915,6 +915,38 @@ def compile_academic_tables():
                     a_vals.append("-")
             print(f"| {dataset} | Alfabe Boyutu (a) | " + " | ".join(a_vals) + " |")
             
+    # 4. Table 5: Statistical Significance Comparisons
+    stats_path = "results/metrics/statistical_results.json"
+    if os.path.exists(stats_path):
+        import json
+        with open(stats_path, "r") as f:
+            stats_data = json.load(f)
+            
+        print("\n### Tablo 5: TimeSeriesAutomata ve Derin Öğrenme Baselines İstatistiksel Karşılaştırma Matrisi (p-Değerleri)")
+        print("| Veri Seti | Karşılaştırma | McNemar p-Değeri | McNemar Anlamlılık (α=0.05) | Wilcoxon p-Değeri | Wilcoxon Anlamlılık (α=0.05) |")
+        print("| --- | --- | --- | --- | --- | --- |")
+        
+        for dataset in ["SKAB", "BATADAL"]:
+            if dataset in stats_data:
+                comps = stats_data[dataset].get("comparisons", {})
+                for baseline in ["LSTM", "GRU", "CNN"]:
+                    pair_name = f"Automata_vs_{baseline}"
+                    if pair_name in comps:
+                        pair_data = comps[pair_name]
+                        mcnemar = pair_data.get("mcnemar", {})
+                        wilcoxon = pair_data.get("wilcoxon", {})
+                        
+                        m_p = mcnemar.get("p_value", 1.0)
+                        m_sig = "Anlamlı (H1)" if mcnemar.get("significant", False) else "Geçersiz (H0)"
+                        
+                        w_p = wilcoxon.get("p_value", 1.0)
+                        w_sig = "Anlamlı (H1)" if wilcoxon.get("significant", False) else "Geçersiz (H0)"
+                        
+                        m_p_str = f"{m_p:.4f}" if isinstance(m_p, (int, float)) else str(m_p)
+                        w_p_str = f"{w_p:.4f}" if isinstance(w_p, (int, float)) else str(w_p)
+                        
+                        print(f"| {dataset} | Automata vs {baseline} | {m_p_str} | {m_sig} | {w_p_str} | {w_sig} |")
+                        
     print("\n" + "="*80)
 
 if __name__ == "__main__":
