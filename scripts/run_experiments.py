@@ -247,7 +247,62 @@ def evaluate_cross_dataset_dl(model_type, train_dataset, test_dataset, seed):
     metrics = calculate_metrics(y_true, y_pred)
     return metrics
 
+def evaluate_automata_sensitivity(param_name, param_value, seed, dataset_name="BATADAL"):
+    """
+    Fits and evaluates TimeSeriesAutomata on dataset_name with param_name set to param_value.
+    Holding other parameters at standard defaults (window_size=10, alphabet_size=5).
+    """
+    config = Config()
+    set_seed(seed)
+    
+    # Configure custom parameters
+    w_size = param_value if param_name == "window_size" else 10
+    a_size = param_value if param_name == "alphabet_size" else 5
+    
+    loader = DataLoader(dataset_name)
+    if dataset_name == "SKAB":
+        raw_data = loader.load_skab(config.SKAB_PATH)
+        scaled_all, _ = loader.preprocess(raw_data, fit_scaler=True)
+        labels_all = loader.get_labels(raw_data)
+        
+        train_len = int(len(scaled_all) * config.TRAIN_RATIO)
+        val_len = int(len(scaled_all) * config.VAL_RATIO)
+        
+        train_data = scaled_all[:train_len]
+        val_data = scaled_all[train_len : train_len + val_len]
+        val_labels = labels_all[train_len : train_len + val_len]
+        test_data = scaled_all[train_len + val_len :]
+        test_labels = labels_all[train_len + val_len :]
+    else:
+        path = os.path.join(config.BATADAL_PATH, "batadal_training_2.csv")
+        raw_data = loader.load_batadal(path)
+        scaled_all, _ = loader.preprocess(raw_data, fit_scaler=True)
+        labels_all = loader.get_labels(raw_data)
+        
+        train_data_df, val_data_df, test_data_df = loader.split_chronological(pd.DataFrame(scaled_all))
+        train_labels_df, val_labels_df, test_labels_df = loader.split_chronological(pd.Series(labels_all))
+        
+        train_data = train_data_df.values
+        val_data = val_data_df.values
+        val_labels = val_labels_df.values
+        test_data = test_data_df.values
+        test_labels = test_labels_df.values
+        
+    automata = TimeSeriesAutomata(alphabet_size=a_size, word_size=4)
+    automata.fit(train_data, window_size=w_size)
+    
+    # Optimize threshold on the validation split
+    from scripts.evaluate_automata import find_best_threshold_automata
+    best_thresh, _ = find_best_threshold_automata(automata, val_data, val_labels, w_size)
+    
+    # Predict anomalies on test split
+    preds = automata.predict_anomaly(test_data, window_size=w_size, threshold=best_thresh)
+    y_true = test_labels[w_size:]
+    metrics = calculate_metrics(y_true, preds[1:])
+    return metrics
+
 def evaluate_dl_skab_kfold_robustness(model_type, seed, noise_scale=0.1):
+
 
 
     """
