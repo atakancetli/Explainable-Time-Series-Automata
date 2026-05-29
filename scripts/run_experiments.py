@@ -581,6 +581,53 @@ def run_cross_dataset_sweeps():
                 
     return all_results
 
+def run_sensitivity_sweeps():
+    """
+    Orchestrates parameter sensitivity sweeps for window size and alphabet size.
+    """
+    seeds = [42, 123, 2026, 7, 999]
+    metrics_file = "sensitivity_results.csv"
+    os.makedirs("results/metrics", exist_ok=True)
+    path = os.path.join("results/metrics", metrics_file)
+    if os.path.exists(path):
+        os.remove(path)
+        
+    all_results = []
+    
+    datasets = ["SKAB", "BATADAL"]
+    parameters = [
+        ("window_size", [3, 4, 5, 6]),
+        ("alphabet_size", [3, 4, 5, 6])
+    ]
+    
+    for dataset in datasets:
+        for param_name, param_values in parameters:
+            for val in param_values:
+                print(f"Sweeping sensitivity for Dataset: {dataset} | Parameter: {param_name} = {val}...")
+                run_metrics = []
+                for seed in seeds:
+                    try:
+                        metrics = evaluate_automata_sensitivity(param_name, val, seed, dataset)
+                        run_metrics.append(metrics)
+                    except Exception as e:
+                        print(f"Error in sensitivity evaluation of {param_name}={val} on {dataset} with seed {seed}: {e}")
+                        
+                if len(run_metrics) > 0:
+                    avg_metrics = {
+                        "dataset": dataset,
+                        "parameter": param_name,
+                        "value": val,
+                        "f1": float(np.mean([m["f1"] for m in run_metrics])),
+                        "precision": float(np.mean([m["precision"] for m in run_metrics])),
+                        "recall": float(np.mean([m["recall"] for m in run_metrics])),
+                        "accuracy": float(np.mean([m["accuracy"] for m in run_metrics]))
+                    }
+                    save_results(avg_metrics, metrics_file)
+                    all_results.append(avg_metrics)
+                    print(f"==> Avg Sensitivity Result for {dataset} | {param_name}={val}: F1 = {avg_metrics['f1']:.4f} | Precision = {avg_metrics['precision']:.4f}")
+                    
+    return all_results
+
 def compile_academic_tables():
     """
     Compiles and prints the academic markdown tables for the report.
@@ -657,6 +704,8 @@ if __name__ == "__main__":
     run_multi_model_robustness_sweeps()
     print("\nRunning Cross-Dataset Sweeps...")
     run_cross_dataset_sweeps()
+    print("\nRunning Parameter Sensitivity Sweeps...")
+    run_sensitivity_sweeps()
     print("\nCompiling Academic Tables...")
     compile_academic_tables()
 
