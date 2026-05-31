@@ -125,3 +125,74 @@ def plot_roc_pr_curves(model_scores_dict, y_true_dict, save_path_prefix):
     plt.savefig(roc_save_path, dpi=300, bbox_inches="tight")
     plt.close()
     print(f"==> Saved ROC and Precision-Recall curves to: {roc_save_path}")
+
+def plot_sensitivity_heatmaps(save_path):
+    """
+    Generates a double-panel heatmap representing the F1-score parameter sensitivity
+    matrix across window size and alphabet size for both SKAB and BATADAL datasets.
+    """
+    csv_path = "results/metrics/sensitivity_results.csv"
+    if not os.path.exists(csv_path):
+        print(f"Warning: sensitivity results not found at: {csv_path}. Skipping heatmap generation.")
+        return
+        
+    df = pd.read_csv(csv_path)
+    datasets = ["SKAB", "BATADAL"]
+    
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4.5))
+    sns.set_theme(style="white")
+    
+    for idx, dataset in enumerate(datasets):
+        sub_df = df[df["dataset"] == dataset]
+        if sub_df.empty:
+            continue
+            
+        # Construct matrix manually to ensure clean formatting
+        matrix_data = []
+        row_names = ["Pencere Boyutu (w)", "Alfabe Boyutu (a)"]
+        param_names = ["window_size", "alphabet_size"]
+        col_names = ["Değer = 3", "Değer = 4", "Değer = 5", "Değer = 6"]
+        
+        for param in param_names:
+            row_vals = []
+            for val in [3, 4, 5, 6]:
+                row = sub_df[(sub_df["parameter"] == param) & (sub_df["value"] == val)]
+                if not row.empty:
+                    row_vals.append(row.iloc[0]["f1"])
+                else:
+                    row_vals.append(0.0)
+            matrix_data.append(row_vals)
+            
+        heatmap_df = pd.DataFrame(matrix_data, index=row_names, columns=col_names)
+        
+        # Draw the heatmap
+        sns.heatmap(
+            heatmap_df,
+            annot=True,
+            fmt=".4f",
+            cmap="YlGnBu",
+            ax=axes[idx],
+            cbar=True,
+            square=False,
+            annot_kws={"size": 12, "weight": "bold"},
+            linewidths=1.5,
+            linecolor="#ffffff"
+        )
+        
+        axes[idx].set_title(f"{dataset} Parametre Duyarlılık Analizi", fontsize=13, weight="bold", pad=12)
+        # Stylize labels
+        axes[idx].set_yticklabels(axes[idx].get_yticklabels(), rotation=0, fontsize=11, weight="bold")
+        axes[idx].set_xticklabels(axes[idx].get_xticklabels(), fontsize=11)
+        
+        # Outline boundaries
+        for _, spine in axes[idx].spines.items():
+            spine.set_visible(True)
+            spine.set_color("#cccccc")
+            spine.set_linewidth(1.5)
+            
+    plt.tight_layout()
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    plt.savefig(save_path, dpi=300, bbox_inches="tight")
+    plt.close()
+    print(f"==> Saved parameter sensitivity heatmaps to: {save_path}")
+
