@@ -1,0 +1,16 @@
+2026-05-26 18:50:08,455 INFO --- Starting 5-fold CV for CNN on SKAB with Seed 7 ---
+2026-05-26 18:50:08,462 INFO --- Training Fold 1/5 ---
+2026-05-26 18:50:08,766 INFO Fold 1 complete: F1=0.0488, Accuracy=0.0250, Train Time=0.23s
+2026-05-26 18:50:08,766 INFO --- Training Fold 2/5 ---
+2026-05-26 18:50:08,976 INFO Fold 2 complete: F1=0.3684, Accuracy=0.4000, Train Time=0.13s
+2026-05-26 18:50:08,977 INFO --- Training Fold 3/5 ---
+2026-05-26 18:51:03,467 INFO --- Starting 5-fold CV for CNN on SKAB with Seed 7 ---
+2026-05-26 18:51:03,477 INFO --- Training Fold 1/5 ---
+2026-05-26 18:51:03,816 INFO Fold 1 complete: F1=0.1212, Accuracy=0.2750, Train Time=0.26s
+2026-05-26 18:51:03,816 INFO --- Training Fold 2/5 ---
+2026-05-26 18:51:04,179 INFO Fold 2 complete: F1=0.0488, Accuracy=0.0250, Train Time=0.27s
+2026-05-26 18:51:04,180 INFO --- Training Fold 3/5 ---
+2026-05-26 18:51:04,446 INFO Fold 3 complete: F1=0.3684, Accuracy=0.4000, Train Time=0.17s
+2026-05-26 18:51:04,446 INFO --- Training Fold 4/5 ---
+2026-05-26 18:51:04,714 INFO Fold 4 complete: F1=0.5556, Accuracy=0.8000, Train Time=0.17s
+2026-05-26 18:51:04,715 INFO --- Seed 7 Overall Results: F1=0.2735, Accuracy=0.3750, Avg Train Time=0.22s ---

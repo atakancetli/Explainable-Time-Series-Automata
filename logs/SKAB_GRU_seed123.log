@@ -1,0 +1,16 @@
+2026-05-26 18:49:59,276 INFO --- Starting 5-fold CV for GRU on SKAB with Seed 123 ---
+2026-05-26 18:49:59,288 INFO --- Training Fold 1/5 ---
+2026-05-26 18:50:00,296 INFO Fold 1 complete: F1=0.0488, Accuracy=0.0250, Train Time=0.89s
+2026-05-26 18:50:00,296 INFO --- Training Fold 2/5 ---
+2026-05-26 18:50:01,065 INFO Fold 2 complete: F1=0.2979, Accuracy=0.1750, Train Time=0.66s
+2026-05-26 18:50:01,065 INFO --- Training Fold 3/5 ---
+2026-05-26 18:50:45,047 INFO --- Starting 5-fold CV for GRU on SKAB with Seed 123 ---
+2026-05-26 18:50:45,053 INFO --- Training Fold 1/5 ---
+2026-05-26 18:50:46,015 INFO Fold 1 complete: F1=0.1290, Accuracy=0.3250, Train Time=0.86s
+2026-05-26 18:50:46,015 INFO --- Training Fold 2/5 ---
+2026-05-26 18:50:46,938 INFO Fold 2 complete: F1=0.0488, Accuracy=0.0250, Train Time=0.82s
+2026-05-26 18:50:46,938 INFO --- Training Fold 3/5 ---
+2026-05-26 18:50:47,706 INFO Fold 3 complete: F1=0.2979, Accuracy=0.1750, Train Time=0.66s
+2026-05-26 18:50:47,706 INFO --- Training Fold 4/5 ---
+2026-05-26 18:50:48,484 INFO Fold 4 complete: F1=0.3158, Accuracy=0.3500, Train Time=0.66s
+2026-05-26 18:50:48,485 INFO --- Seed 123 Overall Results: F1=0.1979, Accuracy=0.2188, Avg Train Time=0.75s ---

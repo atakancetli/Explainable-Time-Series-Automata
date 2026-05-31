@@ -1,0 +1,16 @@
+2026-05-26 18:49:50,200 INFO --- Starting 5-fold CV for LSTM on SKAB with Seed 42 ---
+2026-05-26 18:49:50,217 INFO --- Training Fold 1/5 ---
+2026-05-26 18:49:53,244 INFO Fold 1 complete: F1=0.0488, Accuracy=0.0250, Train Time=2.05s
+2026-05-26 18:49:53,244 INFO --- Training Fold 2/5 ---
+2026-05-26 18:49:53,662 INFO Fold 2 complete: F1=0.3750, Accuracy=0.5000, Train Time=0.32s
+2026-05-26 18:49:53,662 INFO --- Training Fold 3/5 ---
+2026-05-26 18:50:31,469 INFO --- Starting 5-fold CV for LSTM on SKAB with Seed 42 ---
+2026-05-26 18:50:31,481 INFO --- Training Fold 1/5 ---
+2026-05-26 18:50:32,937 INFO Fold 1 complete: F1=0.2000, Accuracy=0.8000, Train Time=0.63s
+2026-05-26 18:50:32,937 INFO --- Training Fold 2/5 ---
+2026-05-26 18:50:33,399 INFO Fold 2 complete: F1=0.0488, Accuracy=0.0250, Train Time=0.36s
+2026-05-26 18:50:33,399 INFO --- Training Fold 3/5 ---
+2026-05-26 18:50:33,804 INFO Fold 3 complete: F1=0.3750, Accuracy=0.5000, Train Time=0.32s
+2026-05-26 18:50:33,804 INFO --- Training Fold 4/5 ---
+2026-05-26 18:50:34,197 INFO Fold 4 complete: F1=0.3182, Accuracy=0.2500, Train Time=0.31s
+2026-05-26 18:50:34,199 INFO --- Seed 42 Overall Results: F1=0.2355, Accuracy=0.3938, Avg Train Time=0.41s ---

@@ -1,0 +1,4 @@
+2026-05-26 20:34:56,604 INFO --- Starting Chronological Evaluation for TimeSeriesAutomata on BATADAL with Seed 2026 ---
+2026-05-26 20:34:56,930 INFO BATADAL complete: F1=0.5714, Accuracy=0.4000, Train Time=0.00s
+2026-05-26 20:36:30,837 INFO --- Starting Chronological Evaluation for TimeSeriesAutomata on BATADAL with Seed 2026 ---
+2026-05-26 20:36:31,118 INFO BATADAL complete: F1=0.5714, Accuracy=0.4000, Train Time=0.00s

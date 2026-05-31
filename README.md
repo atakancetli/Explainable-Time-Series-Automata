@@ -255,6 +255,107 @@ The `TimeSeriesAutomata` implements a formal `explain_decision()` diagnostic met
 6. `decision`: Binary assessment (`normal` vs. `anomaly`).
 7. `confidence_score`: Evaluated path probability.
 
+## 6. Project Directory Layout & Execution Guide
+
+This section outlines the finalized directory tree structure of the repository and provides clear, step-by-step commands to reproduce all academic evaluations, plots, and test suites.
+
+### A. Repository Directory Tree Layout
+
+```
+Explainable-Time-Series-Automata/
+├── configs/
+│   └── config.py               # Hyperparameter declarations and device mappings
+├── data/                       # Dataset directories (ignored by git, populated locally)
+│   ├── skab/
+│   │   ├── valve1/
+│   │   └── valve2/
+│   └── batadal/
+│       └── batadal_training_2.csv
+├── models/                     # Deep learning models & symbolic automata definition
+│   ├── __init__.py
+│   ├── automata.py             # Piecewise PAA + SAX and path probabilities implementation
+│   ├── cnn_model.py            # 1D Temporal Convolutional Network baseline
+│   ├── gru_model.py            # Gated Recurrent Unit sequential baseline
+│   ├── lstm_model.py           # Long Short-Term Memory sequential baseline
+│   └── model_factory.py        # Factory loader mapping architecture strings to model instances
+├── results/                    # Compiled metrics and visualization outputs
+│   ├── metrics/
+│   │   ├── automata_metrics.csv
+│   │   ├── dl_metrics.csv
+│   │   ├── dl_test_metrics.csv
+│   │   ├── robustness_metrics.csv
+│   │   ├── robustness_sweep_results.csv   # Swapped noise configurations results
+│   │   ├── sensitivity_results.csv        # Window/alphabet size sweeps results
+│   │   ├── cross_dataset_results.csv      # Train/test generalizability matrix results
+│   │   └── statistical_results.json       # Wilcoxon and McNemar test statistics
+│   └── plots/
+│       ├── SKAB_confusion_matrices.png
+│       ├── SKAB_roc_pr_curves.png
+│       ├── SKAB_LSTM_loss.png
+│       ├── SKAB_GRU_loss.png
+│       ├── SKAB_CNN_loss.png
+│       ├── BATADAL_confusion_matrices.png
+│       ├── BATADAL_roc_pr_curves.png
+│       ├── BATADAL_LSTM_loss.png
+│       ├── BATADAL_GRU_loss.png
+│       ├── BATADAL_CNN_loss.png
+│       ├── parameter_sensitivity_heatmaps.png
+│       └── automata_transition_matrix.png
+├── scripts/                    # Automated execution entrypoints
+│   ├── __init__.py
+│   ├── plot_generator.py       # Core plotting suite for generating all 12 academic plots
+│   └── run_experiments.py      # Automated experimental sweep runner and table compiler
+├── tests/                      # Verification and validation suites
+│   ├── test_automata.py
+│   ├── test_batadal.py
+│   ├── test_cross_dataset.py
+│   ├── test_experiments.py
+│   ├── test_groupkfold.py
+│   ├── test_lstm.py
+│   ├── test_robustness.py
+│   ├── test_sensitivity.py
+│   ├── test_statistics.py
+│   └── test_visualization.py
+├── utils/                      # Modular utility helper routines
+│   ├── __init__.py
+│   ├── data_loader.py          # SKAB and BATADAL loaders and PCA dimensionality reducers
+│   ├── logger.py               # Custom console log formatting
+│   ├── metrics.py              # Performance calculation routines (Precision, Recall, F1)
+│   ├── robustness.py           # Noise injection functions
+│   ├── statistics.py           # Wilcoxon & McNemar significance calculation functions
+│   └── train_utils.py          # Deep learning train loops and seed initializations
+├── main.py                     # Single-entry CLI to train or evaluate models dynamically
+├── requirements.txt            # Project dependencies (pandas, scikit-learn, scipy, matplotlib, etc.)
+└── README.md                   # This comprehensive academic documentation
+```
+
+### B. Execution and Reproduction Guide
+
+#### 1. Setup Environment
+Ensure your local environment is configured and dependencies are installed using `pip`:
+```bash
+pip install -r requirements.txt
+```
+
+#### 2. Run Comprehensive Experimental Pipeline
+To train deep learning models, run the symbolic TimeSeriesAutomata, perform sensitivity parameter sweeps, execute cross-dataset domain shifts, calculate Wilcoxon and McNemar test significance scores, and print the finished tables:
+```bash
+PYTHONPATH=. python3 scripts/run_experiments.py
+```
+
+#### 3. Regenerate all Academic Figures
+To redraw and save the complete suite of 12 publication-grade charts to `results/plots/`:
+```bash
+PYTHONPATH=. python3 scripts/plot_generator.py
+```
+
+#### 4. Run Modular Unit Test Suite
+To verify the operational correctness of the entire codebase and validate all calculations (53 unit tests):
+```bash
+python3 -m unittest discover -s tests
+```
+
+
 
 
 

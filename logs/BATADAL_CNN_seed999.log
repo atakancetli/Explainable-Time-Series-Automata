@@ -1,0 +1,4 @@
+2026-05-26 18:50:15,216 INFO --- Starting Chronological Training for CNN on BATADAL with Seed 999 ---
+2026-05-26 18:50:15,417 INFO BATADAL complete: F1=0.5000, Accuracy=0.6000, Train Time=0.12s
+2026-05-26 18:51:11,414 INFO --- Starting Chronological Training for CNN on BATADAL with Seed 999 ---
+2026-05-26 18:51:11,591 INFO BATADAL complete: F1=0.5000, Accuracy=0.6000, Train Time=0.10s

@@ -1,0 +1,140 @@
+2026-05-26 20:34:39,566 INFO --- Starting 5-fold CV for TimeSeriesAutomata on SKAB with Seed 42 ---
+2026-05-26 20:34:39,584 INFO --- Evaluating Fold 1/4 ---
+2026-05-26 20:34:40,392 INFO Fold 1 complete: F1=0.1026, Accuracy=0.1250, Train Time=0.01s
+2026-05-26 20:34:40,392 INFO --- Evaluating Fold 2/4 ---
+2026-05-26 20:34:41,199 INFO Fold 2 complete: F1=0.0513, Accuracy=0.0750, Train Time=0.01s
+2026-05-26 20:34:41,199 INFO --- Evaluating Fold 3/4 ---
+2026-05-26 20:34:42,056 INFO Fold 3 complete: F1=0.3182, Accuracy=0.2500, Train Time=0.01s
+2026-05-26 20:34:42,056 INFO --- Evaluating Fold 4/4 ---
+2026-05-26 20:34:42,857 INFO Fold 4 complete: F1=0.3043, Accuracy=0.2000, Train Time=0.01s
+2026-05-26 20:34:42,860 INFO --- Seed 42 Overall SKAB Results: F1=0.1941, Accuracy=0.1625, Avg Train Time=0.01s ---
+2026-05-26 20:35:22,025 INFO --- Starting 5-fold CV for TimeSeriesAutomata on SKAB with Seed 42 ---
+2026-05-26 20:35:22,043 INFO --- Evaluating Fold 1/4 ---
+2026-05-26 20:35:22,876 INFO Fold 1 complete: F1=0.1026, Accuracy=0.1250, Train Time=0.01s
+2026-05-26 20:35:22,876 INFO --- Evaluating Fold 2/4 ---
+2026-05-26 20:35:23,742 INFO Fold 2 complete: F1=0.0513, Accuracy=0.0750, Train Time=0.02s
+2026-05-26 20:35:23,743 INFO --- Evaluating Fold 3/4 ---
+2026-05-26 20:35:24,607 INFO Fold 3 complete: F1=0.3182, Accuracy=0.2500, Train Time=0.01s
+2026-05-26 20:35:24,607 INFO --- Evaluating Fold 4/4 ---
+2026-05-26 20:35:25,416 INFO Fold 4 complete: F1=0.3043, Accuracy=0.2000, Train Time=0.01s
+2026-05-26 20:35:25,420 INFO --- Seed 42 Overall SKAB Results: F1=0.1941, Accuracy=0.1625, Avg Train Time=0.01s ---
+2026-05-26 20:36:07,943 INFO --- Starting 5-fold CV for TimeSeriesAutomata on SKAB with Seed 42 ---
+2026-05-26 20:36:07,958 INFO --- Evaluating Fold 1/4 ---
+2026-05-26 20:36:08,781 INFO Fold 1 complete: F1=0.1026, Accuracy=0.1250, Train Time=0.01s
+2026-05-26 20:36:08,781 INFO --- Evaluating Fold 2/4 ---
+2026-05-26 20:36:09,593 INFO Fold 2 complete: F1=0.0513, Accuracy=0.0750, Train Time=0.01s
+2026-05-26 20:36:09,593 INFO --- Evaluating Fold 3/4 ---
+2026-05-26 20:36:10,395 INFO Fold 3 complete: F1=0.3182, Accuracy=0.2500, Train Time=0.01s
+2026-05-26 20:36:10,395 INFO --- Evaluating Fold 4/4 ---
+2026-05-26 20:36:11,218 INFO Fold 4 complete: F1=0.3043, Accuracy=0.2000, Train Time=0.01s
+2026-05-26 20:36:11,220 INFO --- Seed 42 Overall SKAB Results: F1=0.1941, Accuracy=0.1625, Avg Train Time=0.01s ---
+2026-05-26 20:36:13,422 INFO --- Starting 5-fold CV for TimeSeriesAutomata on SKAB with Seed 42 ---
+2026-05-26 20:36:13,435 INFO --- Evaluating Fold 1/4 ---
+2026-05-26 20:36:14,279 INFO Fold 1 complete: F1=0.1026, Accuracy=0.1250, Train Time=0.01s
+2026-05-26 20:36:14,279 INFO --- Evaluating Fold 2/4 ---
+2026-05-26 20:36:15,088 INFO Fold 2 complete: F1=0.0513, Accuracy=0.0750, Train Time=0.01s
+2026-05-26 20:36:15,088 INFO --- Evaluating Fold 3/4 ---
+2026-05-26 20:36:15,887 INFO Fold 3 complete: F1=0.3182, Accuracy=0.2500, Train Time=0.01s
+2026-05-26 20:36:15,887 INFO --- Evaluating Fold 4/4 ---
+2026-05-26 20:36:16,694 INFO Fold 4 complete: F1=0.3043, Accuracy=0.2000, Train Time=0.01s
+2026-05-26 20:36:16,697 INFO --- Seed 42 Overall SKAB Results: F1=0.1941, Accuracy=0.1625, Avg Train Time=0.01s ---
+2026-05-26 20:38:15,449 INFO --- Starting 5-fold CV for TimeSeriesAutomata on SKAB with Seed 42 ---
+2026-05-26 20:38:15,465 INFO --- Evaluating Fold 1/4 ---
+2026-05-26 20:38:16,323 INFO Fold 1 complete: F1=0.1026, Accuracy=0.1250, Train Time=0.01s
+2026-05-26 20:38:16,323 INFO --- Evaluating Fold 2/4 ---
+2026-05-26 20:38:17,177 INFO Fold 2 complete: F1=0.0513, Accuracy=0.0750, Train Time=0.01s
+2026-05-26 20:38:17,177 INFO --- Evaluating Fold 3/4 ---
+2026-05-26 20:38:17,985 INFO Fold 3 complete: F1=0.3182, Accuracy=0.2500, Train Time=0.01s
+2026-05-26 20:38:17,985 INFO --- Evaluating Fold 4/4 ---
+2026-05-26 20:38:18,831 INFO Fold 4 complete: F1=0.3043, Accuracy=0.2000, Train Time=0.01s
+2026-05-26 20:38:18,834 INFO --- Seed 42 Overall SKAB Results: F1=0.1941, Accuracy=0.1625, Avg Train Time=0.01s ---
+2026-05-28 04:31:10,872 INFO --- Starting 5-fold CV for TimeSeriesAutomata on SKAB with Seed 42 ---
+2026-05-28 04:31:10,897 INFO --- Evaluating Fold 1/4 ---
+2026-05-28 04:31:12,197 INFO Fold 1 complete: F1=0.1026, Accuracy=0.1250, Train Time=0.02s
+2026-05-28 04:31:12,197 INFO --- Evaluating Fold 2/4 ---
+2026-05-28 04:31:13,407 INFO Fold 2 complete: F1=0.0513, Accuracy=0.0750, Train Time=0.02s
+2026-05-28 04:31:13,408 INFO --- Evaluating Fold 3/4 ---
+2026-05-28 04:31:14,557 INFO Fold 3 complete: F1=0.3182, Accuracy=0.2500, Train Time=0.02s
+2026-05-28 04:31:14,561 INFO --- Evaluating Fold 4/4 ---
+2026-05-28 04:31:15,799 INFO Fold 4 complete: F1=0.3043, Accuracy=0.2000, Train Time=0.02s
+2026-05-28 04:31:15,808 INFO --- Seed 42 Overall SKAB Results: F1=0.1941, Accuracy=0.1625, Avg Train Time=0.02s ---
+2026-05-28 04:33:18,100 INFO --- Starting 5-fold CV for TimeSeriesAutomata on SKAB with Seed 42 ---
+2026-05-28 04:33:18,118 INFO --- Evaluating Fold 1/4 ---
+2026-05-28 04:33:19,156 INFO Fold 1 complete: F1=0.1026, Accuracy=0.1250, Train Time=0.01s
+2026-05-28 04:33:19,156 INFO --- Evaluating Fold 2/4 ---
+2026-05-28 04:33:20,186 INFO Fold 2 complete: F1=0.0513, Accuracy=0.0750, Train Time=0.02s
+2026-05-28 04:33:20,187 INFO --- Evaluating Fold 3/4 ---
+2026-05-28 04:33:21,261 INFO Fold 3 complete: F1=0.3182, Accuracy=0.2500, Train Time=0.01s
+2026-05-28 04:33:21,261 INFO --- Evaluating Fold 4/4 ---
+2026-05-28 04:33:22,306 INFO Fold 4 complete: F1=0.3043, Accuracy=0.2000, Train Time=0.01s
+2026-05-28 04:33:22,310 INFO --- Seed 42 Overall SKAB Results: F1=0.1941, Accuracy=0.1625, Avg Train Time=0.01s ---
+2026-05-30 01:33:56,838 INFO --- Starting 5-fold CV for TimeSeriesAutomata on SKAB with Seed 42 ---
+2026-05-30 01:33:56,859 INFO --- Evaluating Fold 1/4 ---
+2026-05-30 01:33:57,947 INFO Fold 1 complete: F1=0.1026, Accuracy=0.1250, Train Time=0.02s
+2026-05-30 01:33:57,947 INFO --- Evaluating Fold 2/4 ---
+2026-05-30 01:33:58,989 INFO Fold 2 complete: F1=0.0513, Accuracy=0.0750, Train Time=0.01s
+2026-05-30 01:33:58,989 INFO --- Evaluating Fold 3/4 ---
+2026-05-30 01:34:00,021 INFO Fold 3 complete: F1=0.3182, Accuracy=0.2500, Train Time=0.01s
+2026-05-30 01:34:00,021 INFO --- Evaluating Fold 4/4 ---
+2026-05-30 01:34:01,130 INFO Fold 4 complete: F1=0.3043, Accuracy=0.2000, Train Time=0.02s
+2026-05-30 01:34:01,145 INFO --- Seed 42 Overall SKAB Results: F1=0.1941, Accuracy=0.1625, Avg Train Time=0.02s ---
+2026-05-30 01:34:38,513 INFO --- Starting 5-fold CV for TimeSeriesAutomata on SKAB with Seed 42 ---
+2026-05-30 01:34:38,529 INFO --- Evaluating Fold 1/4 ---
+2026-05-30 01:34:39,587 INFO Fold 1 complete: F1=0.1026, Accuracy=0.1250, Train Time=0.01s
+2026-05-30 01:34:39,587 INFO --- Evaluating Fold 2/4 ---
+2026-05-30 01:34:40,623 INFO Fold 2 complete: F1=0.0513, Accuracy=0.0750, Train Time=0.02s
+2026-05-30 01:34:40,623 INFO --- Evaluating Fold 3/4 ---
+2026-05-30 01:34:41,649 INFO Fold 3 complete: F1=0.3182, Accuracy=0.2500, Train Time=0.01s
+2026-05-30 01:34:41,649 INFO --- Evaluating Fold 4/4 ---
+2026-05-30 01:34:42,695 INFO Fold 4 complete: F1=0.3043, Accuracy=0.2000, Train Time=0.02s
+2026-05-30 01:34:42,703 INFO --- Seed 42 Overall SKAB Results: F1=0.1941, Accuracy=0.1625, Avg Train Time=0.01s ---
+2026-05-30 01:39:33,863 INFO --- Starting 5-fold CV for TimeSeriesAutomata on SKAB with Seed 42 ---
+2026-05-30 01:39:33,880 INFO --- Evaluating Fold 1/4 ---
+2026-05-30 01:39:34,942 INFO Fold 1 complete: F1=0.1026, Accuracy=0.1250, Train Time=0.02s
+2026-05-30 01:39:34,943 INFO --- Evaluating Fold 2/4 ---
+2026-05-30 01:39:36,136 INFO Fold 2 complete: F1=0.0513, Accuracy=0.0750, Train Time=0.02s
+2026-05-30 01:39:36,136 INFO --- Evaluating Fold 3/4 ---
+2026-05-30 01:39:37,188 INFO Fold 3 complete: F1=0.3182, Accuracy=0.2500, Train Time=0.02s
+2026-05-30 01:39:37,189 INFO --- Evaluating Fold 4/4 ---
+2026-05-30 01:39:38,362 INFO Fold 4 complete: F1=0.3043, Accuracy=0.2000, Train Time=0.01s
+2026-05-30 01:39:38,382 INFO --- Seed 42 Overall SKAB Results: F1=0.1941, Accuracy=0.1625, Avg Train Time=0.02s ---
+2026-05-30 01:40:07,345 INFO --- Starting 5-fold CV for TimeSeriesAutomata on SKAB with Seed 42 ---
+2026-05-30 01:40:07,361 INFO --- Evaluating Fold 1/4 ---
+2026-05-30 01:40:08,390 INFO Fold 1 complete: F1=0.1026, Accuracy=0.1250, Train Time=0.01s
+2026-05-30 01:40:08,390 INFO --- Evaluating Fold 2/4 ---
+2026-05-30 01:40:09,434 INFO Fold 2 complete: F1=0.0513, Accuracy=0.0750, Train Time=0.01s
+2026-05-30 01:40:09,434 INFO --- Evaluating Fold 3/4 ---
+2026-05-30 01:40:10,469 INFO Fold 3 complete: F1=0.3182, Accuracy=0.2500, Train Time=0.01s
+2026-05-30 01:40:10,469 INFO --- Evaluating Fold 4/4 ---
+2026-05-30 01:40:11,509 INFO Fold 4 complete: F1=0.3043, Accuracy=0.2000, Train Time=0.01s
+2026-05-30 01:40:11,526 INFO --- Seed 42 Overall SKAB Results: F1=0.1941, Accuracy=0.1625, Avg Train Time=0.01s ---
+2026-06-01 00:08:38,663 INFO --- Starting 5-fold CV for TimeSeriesAutomata on SKAB with Seed 42 ---
+2026-06-01 00:08:38,687 INFO --- Evaluating Fold 1/4 ---
+2026-06-01 00:08:39,780 INFO Fold 1 complete: F1=0.1026, Accuracy=0.1250, Train Time=0.01s
+2026-06-01 00:08:39,780 INFO --- Evaluating Fold 2/4 ---
+2026-06-01 00:08:40,932 INFO Fold 2 complete: F1=0.0513, Accuracy=0.0750, Train Time=0.02s
+2026-06-01 00:08:40,932 INFO --- Evaluating Fold 3/4 ---
+2026-06-01 00:08:42,005 INFO Fold 3 complete: F1=0.3182, Accuracy=0.2500, Train Time=0.02s
+2026-06-01 00:08:42,005 INFO --- Evaluating Fold 4/4 ---
+2026-06-01 00:08:43,089 INFO Fold 4 complete: F1=0.3043, Accuracy=0.2000, Train Time=0.01s
+2026-06-01 00:08:43,098 INFO --- Seed 42 Overall SKAB Results: F1=0.1941, Accuracy=0.1625, Avg Train Time=0.02s ---
+2026-06-01 00:09:29,679 INFO --- Starting 5-fold CV for TimeSeriesAutomata on SKAB with Seed 42 ---
+2026-06-01 00:09:29,697 INFO --- Evaluating Fold 1/4 ---
+2026-06-01 00:09:30,768 INFO Fold 1 complete: F1=0.1026, Accuracy=0.1250, Train Time=0.02s
+2026-06-01 00:09:30,768 INFO --- Evaluating Fold 2/4 ---
+2026-06-01 00:09:31,807 INFO Fold 2 complete: F1=0.0513, Accuracy=0.0750, Train Time=0.01s
+2026-06-01 00:09:31,807 INFO --- Evaluating Fold 3/4 ---
+2026-06-01 00:09:32,843 INFO Fold 3 complete: F1=0.3182, Accuracy=0.2500, Train Time=0.01s
+2026-06-01 00:09:32,843 INFO --- Evaluating Fold 4/4 ---
+2026-06-01 00:09:33,935 INFO Fold 4 complete: F1=0.3043, Accuracy=0.2000, Train Time=0.01s
+2026-06-01 00:09:33,941 INFO --- Seed 42 Overall SKAB Results: F1=0.1941, Accuracy=0.1625, Avg Train Time=0.01s ---
+2026-06-01 00:13:52,818 INFO --- Starting 5-fold CV for TimeSeriesAutomata on SKAB with Seed 42 ---
+2026-06-01 00:13:52,835 INFO --- Evaluating Fold 1/4 ---
+2026-06-01 00:13:53,948 INFO Fold 1 complete: F1=0.1026, Accuracy=0.1250, Train Time=0.02s
+2026-06-01 00:13:53,948 INFO --- Evaluating Fold 2/4 ---
+2026-06-01 00:13:54,982 INFO Fold 2 complete: F1=0.0513, Accuracy=0.0750, Train Time=0.02s
+2026-06-01 00:13:54,982 INFO --- Evaluating Fold 3/4 ---
+2026-06-01 00:13:56,003 INFO Fold 3 complete: F1=0.3182, Accuracy=0.2500, Train Time=0.01s
+2026-06-01 00:13:56,003 INFO --- Evaluating Fold 4/4 ---
+2026-06-01 00:13:57,033 INFO Fold 4 complete: F1=0.3043, Accuracy=0.2000, Train Time=0.01s
+2026-06-01 00:13:57,041 INFO --- Seed 42 Overall SKAB Results: F1=0.1941, Accuracy=0.1625, Avg Train Time=0.02s ---

@@ -1,0 +1,4 @@
+2026-05-26 18:50:13,872 INFO --- Starting Chronological Training for GRU on BATADAL with Seed 999 ---
+2026-05-26 18:50:14,441 INFO BATADAL complete: F1=0.3333, Accuracy=0.2000, Train Time=0.47s
+2026-05-26 18:51:10,105 INFO --- Starting Chronological Training for GRU on BATADAL with Seed 999 ---
+2026-05-26 18:51:10,673 INFO BATADAL complete: F1=0.3333, Accuracy=0.2000, Train Time=0.48s

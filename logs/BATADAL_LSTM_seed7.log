@@ -1,0 +1,4 @@
+2026-05-26 18:50:10,747 INFO --- Starting Chronological Training for LSTM on BATADAL with Seed 7 ---
+2026-05-26 18:50:11,068 INFO BATADAL complete: F1=0.3636, Accuracy=0.3000, Train Time=0.24s
+2026-05-26 18:51:07,024 INFO --- Starting Chronological Training for LSTM on BATADAL with Seed 7 ---
+2026-05-26 18:51:07,382 INFO BATADAL complete: F1=0.3636, Accuracy=0.3000, Train Time=0.27s

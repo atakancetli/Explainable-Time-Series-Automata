@@ -1,0 +1,34 @@
+2026-05-23 21:22:33,436 INFO Epoch 0: Train Loss=0.7103, Val Loss=0.6930
+2026-05-23 21:22:33,478 INFO Epoch 1: Train Loss=0.6753, Val Loss=0.6694
+2026-05-23 21:22:33,521 INFO Epoch 2: Train Loss=0.6395, Val Loss=0.6457
+2026-05-23 21:22:33,564 INFO Epoch 3: Train Loss=0.6073, Val Loss=0.6213
+2026-05-23 21:22:33,606 INFO Epoch 4: Train Loss=0.5607, Val Loss=0.5954
+2026-05-23 21:22:33,650 INFO Epoch 5: Train Loss=0.5190, Val Loss=0.5685
+2026-05-23 21:22:33,694 INFO Epoch 6: Train Loss=0.4476, Val Loss=0.5429
+2026-05-23 21:22:33,737 INFO Epoch 7: Train Loss=0.4037, Val Loss=0.5226
+2026-05-23 21:22:33,778 INFO Epoch 8: Train Loss=0.3878, Val Loss=0.5165
+2026-05-23 21:22:33,821 INFO Epoch 9: Train Loss=0.3114, Val Loss=0.5334
+2026-05-23 21:22:33,859 INFO Epoch 10: Train Loss=0.3494, Val Loss=0.5707
+2026-05-23 21:22:33,896 INFO Epoch 11: Train Loss=0.2925, Val Loss=0.6054
+2026-05-23 21:22:33,934 INFO Epoch 12: Train Loss=0.2978, Val Loss=0.6286
+2026-05-23 21:22:33,975 INFO Epoch 13: Train Loss=0.3735, Val Loss=0.6385
+2026-05-23 21:22:33,975 INFO Early stopping triggered
+2026-05-23 21:22:33,975 INFO Loading best model weights from checkpoint...
+2026-05-23 21:22:34,063 INFO Optimal threshold found: 0.1800 with Validation F1-score: 0.3636
+2026-05-26 18:45:12,559 INFO Epoch 0: Train Loss=0.7035, Val Loss=0.6792
+2026-05-26 18:45:12,599 INFO Epoch 1: Train Loss=0.6656, Val Loss=0.6563
+2026-05-26 18:45:12,644 INFO Epoch 2: Train Loss=0.6301, Val Loss=0.6328
+2026-05-26 18:45:12,688 INFO Epoch 3: Train Loss=0.5973, Val Loss=0.6084
+2026-05-26 18:45:12,728 INFO Epoch 4: Train Loss=0.5473, Val Loss=0.5823
+2026-05-26 18:45:12,767 INFO Epoch 5: Train Loss=0.5051, Val Loss=0.5551
+2026-05-26 18:45:12,807 INFO Epoch 6: Train Loss=0.4689, Val Loss=0.5282
+2026-05-26 18:45:12,855 INFO Epoch 7: Train Loss=0.4153, Val Loss=0.5065
+2026-05-26 18:45:12,896 INFO Epoch 8: Train Loss=0.3896, Val Loss=0.4980
+2026-05-26 18:45:12,936 INFO Epoch 9: Train Loss=0.3164, Val Loss=0.5116
+2026-05-26 18:45:12,971 INFO Epoch 10: Train Loss=0.3242, Val Loss=0.5471
+2026-05-26 18:45:13,007 INFO Epoch 11: Train Loss=0.3639, Val Loss=0.5855
+2026-05-26 18:45:13,045 INFO Epoch 12: Train Loss=0.3716, Val Loss=0.6047
+2026-05-26 18:45:13,081 INFO Epoch 13: Train Loss=0.3712, Val Loss=0.6049
+2026-05-26 18:45:13,082 INFO Early stopping triggered
+2026-05-26 18:45:13,082 INFO Loading best model weights from checkpoint...
+2026-05-26 18:45:13,164 INFO Optimal threshold found: 0.1900 with Validation F1-score: 0.4000
