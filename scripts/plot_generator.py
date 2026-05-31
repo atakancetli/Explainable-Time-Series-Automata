@@ -240,8 +240,12 @@ def plot_automata_transitions(save_path):
     matrix = np.zeros((n_states, n_states))
     
     for i, s_from in enumerate(top_state_names):
-        for j, s_to in enumerate(top_state_names):
-            matrix[i][j] = automata.transition_probabilities.get((s_from, s_to), 0.0)
+        if hasattr(automata, "transitions") and s_from in automata.transitions:
+            outgoing = automata.transitions[s_from]
+            total_outgoing = sum(outgoing.values())
+            for j, s_to in enumerate(top_state_names):
+                if total_outgoing > 0:
+                    matrix[i][j] = outgoing.get(s_to, 0) / total_outgoing
             
     # Plot transition heatmap
     plt.figure(figsize=(9, 7.5))
