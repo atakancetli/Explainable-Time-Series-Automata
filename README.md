@@ -45,3 +45,26 @@ $$\text{Lev}(S_u, S_v) = \text{edit\_distance}(S_u, S_v)$$
 We map $S_u$ to the closest known state $S_v^*$ that minimizes the edit distance, transferring its transition probabilities with a minor smoothing penalty $\sigma$:
 
 $$P(S_{t-1} \to S_u) \approx P(S_{t-1} \to S_v^*) \cdot \sigma$$
+
+## 2. Deep Learning Baseline Architectures
+
+To establish high-quality performance baselines, three state-of-the-art Deep Learning models were implemented:
+
+1. **LSTM (Long Short-Term Memory)**:
+   - Captures long-term sequential dependencies across time-series windows.
+   - Architecture: Input Layer $\to$ 2-layer stacked LSTM (Hidden Size: 64) $\to$ Dropout Layer (0.2) $\to$ Fully Connected Layer $\to$ Sigmoid.
+2. **GRU (Gated Recurrent Unit)**:
+   - Efficient, low-parameter alternative to LSTM with gated update/reset states.
+   - Architecture: Input Layer $\to$ 2-layer stacked GRU (Hidden Size: 64) $\to$ Dropout Layer (0.2) $\to$ Fully Connected Layer $\to$ Sigmoid.
+3. **1D-CNN (Temporal Convolutional Network)**:
+   - Captures high-frequency local temporal features via sliding convolutional kernels.
+   - Architecture: Input Layer $\to$ 1D Convolutional Layer (64 filters, kernel size 3) $\to$ Max Pooling $\to$ 1D Convolutional Layer (32 filters) $\to$ Global Average Pooling $\to$ Fully Connected Layer $\to$ Sigmoid.
+
+### Training & Seeding Hyperparameters
+All Deep Learning models are trained with identical hyperparameters to ensure perfectly fair comparisons:
+- **Optimizer**: Adam optimizer with dynamic learning rate scheduling (Initial LR: $1 \times 10^{-3}$).
+- **Loss Function**: Binary Cross-Entropy (BCE) Loss calculated on anomaly labels.
+- **Seeding & Folds**: Evaluated across 5 deterministic seeds `[42, 123, 2026, 7, 999]`.
+  - **SKAB**: 5-Fold Stratified GroupKFold cross-validation split.
+  - **BATADAL**: 60% Train, 20% Validation (for threshold tuning), and 20% Chronological Test splits.
+
