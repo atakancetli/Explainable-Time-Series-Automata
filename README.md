@@ -164,5 +164,97 @@ The test statistics and p-values are detailed in Table 5:
 - **SKAB**: The McNemar tests are highly significant ($p < 0.0001$), rejecting the null hypothesis ($H_0$) that error rates are identical. At a sample-by-sample level, the deep learning models (especially CNN) exhibit prediction transitions that significantly outclass the Automata, although the Wilcoxon seed-level F1 differences are not significant due to the small seed size ($N=5$).
 - **BATADAL**: The Automata's performance shows no statistically significant difference from LSTM or CNN ($p > 0.05$), proving that it achieves comparable high-accuracy classification while maintaining full interpretive transparency. Crucially, on Wilcoxon signed-rank test against GRU, the Automata is statistically superior ($p = 0.0455$), highlighting GRU's extreme sensitivity to threshold collapse under this data domain.
 
+## 5. Visual Academic Assets and Interpretability/Explainability Diagnostic Modules
+
+To provide comprehensive visual and analytical tools, all generated assets from evaluation runs are embedded below. Additionally, we describe the standardized JSON output of our diagnostic module.
+
+### A. Academic Visualization Suite (12 Figures)
+
+#### 1. Evaluation Curves & Confusion Matrices for SKAB
+Below are the ROC and Precision-Recall curves, confusion matrices, and deep learning baseline loss convergence plots evaluated on the SKAB dataset:
+
+* **ROC & Precision-Recall Curves (SKAB)**:
+  ![SKAB ROC and Precision-Recall Curves](results/plots/SKAB_roc_pr_curves.png)
+  *Figure 1: ROC and PR curves showing precision/recall trade-offs across five seeds on SKAB.*
+
+* **Confusion Matrices (SKAB)**:
+  ![SKAB Confusion Matrices](results/plots/SKAB_confusion_matrices.png)
+  *Figure 2: Confusion matrices for all models on SKAB, highlighting the classification performance.*
+
+* **Deep Learning Training Convergence (SKAB)**:
+  | LSTM Loss | GRU Loss | CNN Loss |
+  | :---: | :---: | :---: |
+  | ![LSTM Loss SKAB](results/plots/SKAB_LSTM_loss.png) | ![GRU Loss SKAB](results/plots/SKAB_GRU_loss.png) | ![CNN Loss SKAB](results/plots/SKAB_CNN_loss.png) |
+  *Figure 3: Training and Validation cross-entropy loss trajectories across epochs for deep learning baselines on SKAB.*
+
+---
+
+#### 2. Evaluation Curves & Confusion Matrices for BATADAL
+Below are the ROC and Precision-Recall curves, confusion matrices, and training loss convergence plots evaluated on the BATADAL dataset:
+
+* **ROC & Precision-Recall Curves (BATADAL)**:
+  ![BATADAL ROC and Precision-Recall Curves](results/plots/BATADAL_roc_pr_curves.png)
+  *Figure 4: ROC and PR curves for the four models on BATADAL.*
+
+* **Confusion Matrices (BATADAL)**:
+  ![BATADAL Confusion Matrices](results/plots/BATADAL_confusion_matrices.png)
+  *Figure 5: Confusion matrices showing the distribution of true vs. predicted anomaly labels on BATADAL.*
+
+* **Deep Learning Training Convergence (BATADAL)**:
+  | LSTM Loss | GRU Loss | CNN Loss |
+  | :---: | :---: | :---: |
+  | ![LSTM Loss BATADAL](results/plots/BATADAL_LSTM_loss.png) | ![GRU Loss BATADAL](results/plots/BATADAL_GRU_loss.png) | ![CNN Loss BATADAL](results/plots/BATADAL_CNN_loss.png) |
+  *Figure 6: BCE loss convergence curves across training epochs on BATADAL.*
+
+---
+
+#### 3. Parameter Sensitivity Heatmaps and Automata Transitions
+* **Hyperparameter Sensitivity Heatmaps**:
+  ![Parameter Sensitivity Heatmaps](results/plots/parameter_sensitivity_heatmaps.png)
+  *Figure 7: Impact of window size ($w$) and alphabet size ($a$) on F1-scores across SKAB and BATADAL.*
+
+* **Automata Transition Probability Matrix**:
+  ![Automata Transition Probability Matrix](results/plots/automata_transition_matrix.png)
+  *Figure 8: Heatmap representation of symbolic state transition probabilities trained on normal data.*
+
+---
+
+### B. Standardized Explainability/Interpretability Diagnostics Output (JSON Schema)
+The `TimeSeriesAutomata` implements a formal `explain_decision()` diagnostic method. For any inference step, it yields a JSON-compliant structure showing the symbolic path transition details, unseen states mapped via Levenshtein distance, confidence scores, and natural language reasons for anomalies:
+
+```json
+[
+  {
+    "time_step": 45,
+    "state": "aabac",
+    "pattern": "aabaf",
+    "status": "unseen",
+    "mapped_to": "aabae",
+    "distance": 1.0,
+    "transitions": [
+      {
+        "from": "aabac",
+        "to": "aabae",
+        "probability": 0.0025
+      }
+    ],
+    "probability": 0.0025,
+    "decision": "anomaly",
+    "confidence_score": 0.0025,
+    "reason": "Low probability path detected"
+  }
+]
+```
+
+*Key Fields Explained*:
+1. `pattern`: The raw SAX word extracted from the current window.
+2. `status`: Marks whether the SAX word was seen in training data (`seen`) or represents a new behavior (`unseen`).
+3. `mapped_to`: The closest state found in the training database using the Levenshtein distance metric.
+4. `distance`: The minimum edit distance between the unseen pattern and mapped state.
+5. `transitions`: The localized sequential Markov path evaluated during the decision step.
+6. `decision`: Binary assessment (`normal` vs. `anomaly`).
+7. `confidence_score`: Evaluated path probability.
+
+
 
 
