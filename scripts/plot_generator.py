@@ -196,3 +196,88 @@ def plot_sensitivity_heatmaps(save_path):
     plt.close()
     print(f"==> Saved parameter sensitivity heatmaps to: {save_path}")
 
+def plot_automata_transitions(save_path):
+    """
+    Fits TimeSeriesAutomata on BATADAL training dataset and plots the transition
+    probability matrix of the top 10 most visited states as an annotated heatmap.
+    """
+    config = Config()
+    set_seed(42)
+    
+    loader = DataLoader("BATADAL")
+    path = config.BATADAL_PATH
+    if os.path.isdir(path):
+        path = os.path.join(path, "batadal_training_2.csv")
+    raw_data = loader.load_batadal(path)
+    scaled_data, _ = loader.preprocess(raw_data)
+    
+    # Train data split
+    train_data_df, _, _ = loader.split_chronological(pd.DataFrame(scaled_data))
+    train_data = train_data_df.values
+    
+    # Fit Automata
+    automata = TimeSeriesAutomata(alphabet_size=config.ALPHABET_SIZE, word_size=4)
+    automata.fit(train_data, window_size=config.WINDOW_SIZE)
+    
+    # Generate states in training data to count frequency
+    states = automata.generate_states(train_data, window_size=config.WINDOW_SIZE)
+    
+    # Count frequencies of each state
+    state_counts = {}
+    for state in states:
+        state_counts[state] = state_counts.get(state, 0) + 1
+        
+    # Get top 10 most frequent states
+    top_states = sorted(state_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+    top_state_names = [state[0] for state in top_states]
+    
+    if len(top_state_names) < 2:
+        print("Warning: not enough states found in Automata to plot transition matrix.")
+        return
+        
+    # Construct transition matrix for top states
+    n_states = len(top_state_names)
+    matrix = np.zeros((n_states, n_states))
+    
+    for i, s_from in enumerate(top_state_names):
+        for j, s_to in enumerate(top_state_names):
+            matrix[i][j] = automata.transition_probabilities.get((s_from, s_to), 0.0)
+            
+    # Plot transition heatmap
+    plt.figure(figsize=(9, 7.5))
+    sns.set_theme(style="white")
+    
+    sns.heatmap(
+        matrix,
+        annot=True,
+        fmt=".3f",
+        cmap="Oranges",
+        xticklabels=top_state_names,
+        yticklabels=top_state_names,
+        cbar=True,
+        square=True,
+        annot_kws={"size": 10, "weight": "bold"},
+        linewidths=1.0,
+        linecolor="#ffffff"
+    )
+    
+    plt.title("TimeSeriesAutomata Durum Geçiş Olasılıkları Matrisi\n(En Sık Ziyaret Edilen 10 Durum)", fontsize=13, weight="bold", pad=15)
+    plt.xlabel("Hedef Durum ($S_t$)", fontsize=11, labelpad=8)
+    plt.ylabel("Kaynak Durum ($S_{t-1}$)", fontsize=11, labelpad=8)
+    plt.xticks(rotation=45)
+    plt.yticks(rotation=0)
+    
+    # Draw frame
+    ax = plt.gca()
+    for _, spine in ax.spines.items():
+        spine.set_visible(True)
+        spine.set_color("#cccccc")
+        spine.set_linewidth(1.5)
+        
+    plt.tight_layout()
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    plt.savefig(save_path, dpi=300, bbox_inches="tight")
+    plt.close()
+    print(f"==> Saved symbolic automata transition matrix heatmap to: {save_path}")
+
+
