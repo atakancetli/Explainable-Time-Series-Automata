@@ -280,4 +280,175 @@ def plot_automata_transitions(save_path):
     plt.close()
     print(f"==> Saved symbolic automata transition matrix heatmap to: {save_path}")
 
+def get_model_scores(model_type, seed, dataset_name):
+    """
+    Returns (continuous anomaly scores, labels) for ROC/PR curve plotting.
+    Ensures correct scaling, data loaders, PCA, folds, and checkpoint loading.
+    """
+    config = Config()
+    set_seed(seed)
+    
+    all_scores = []
+    all_labels = []
+    
+    if dataset_name == "SKAB":
+        loader = DataLoader("SKAB")
+        raw_data = loader.load_skab(config.SKAB_PATH)
+        folds = loader.split_by_group(raw_data, n_splits=5, stratified=True)
+        
+        for fold_idx, (train_idx, val_idx) in enumerate(folds):
+            train_df = raw_data.iloc[train_idx]
+            val_df = raw_data.iloc[val_idx]
+            
+            loader_fold = DataLoader("SKAB")
+            train_scaled, _ = loader_fold.preprocess(train_df, fit_scaler=True)
+            val_scaled, _ = loader_fold.transform(val_df)
+            
+            train_labels = loader_fold.get_labels(train_df)
+            val_labels = loader_fold.get_labels(val_df)
+            
+            if model_type == "Automata":
+                automata = TimeSeriesAutomata(alphabet_size=config.ALPHABET_SIZE, word_size=4)
+                automata.fit(train_scaled, window_size=config.WINDOW_SIZE)
+                
+                states = automata.generate_states(val_scaled, window_size=config.WINDOW_SIZE)
+                num_windows = len(states)
+                scores = np.zeros(num_windows)
+                for t in range(1, num_windows):
+                    active_sequence = states[t - 1 : min(t + 2, num_windows)]
+                    prob = automata.calculate_path_probability(active_sequence, min_prob=1e-6)
+                    scores[t] = 1.0 - prob
+                
+                y_true = val_labels[config.WINDOW_SIZE:]
+                y_scores = scores[1:]
+            else:
+                _, val_loader_clean = loader_fold.get_fold_dataloaders(
+                    val_scaled, val_scaled, val_labels, val_labels
+                )
+                model = ModelFactory.get_model(
+                    model_type, 
+                    val_scaled.shape[1], 
+                    config.HIDDEN_SIZE, 
+                    config.NUM_LAYERS,
+                    dropout=0.2,
+                    window_size=config.WINDOW_SIZE
+                ).to(config.DEVICE)
+                checkpoint_path = f"checkpoints/SKAB_{model_type}_seed{seed}_fold{fold_idx+1}_best.pth"
+                model = load_model(model, checkpoint_path, config.DEVICE)
+                model.eval()
+                y_probs = predict(model, val_loader_clean, config.DEVICE)
+                window_size = len(val_labels) - len(y_probs)
+                y_true = val_labels[window_size:]
+                y_scores = y_probs
+                
+            all_scores.extend(y_scores)
+            all_labels.extend(y_true)
+            
+    else:  # BATADAL
+        loader = DataLoader("BATADAL")
+        path = config.BATADAL_PATH
+        if os.path.isdir(path):
+            path = os.path.join(path, "batadal_training_2.csv")
+        raw_data = loader.load_batadal(path)
+        scaled_data, _ = loader.preprocess(raw_data)
+        labels = loader.get_labels(raw_data)
+        
+        train_data, val_data, test_data = loader.split_chronological(pd.DataFrame(scaled_data))
+        train_labels, val_labels, test_labels = loader.split_chronological(pd.Series(labels))
+        
+        if model_type == "Automata":
+            automata = TimeSeriesAutomata(alphabet_size=config.ALPHABET_SIZE, word_size=4)
+            automata.fit(train_data.values, window_size=config.WINDOW_SIZE)
+            
+            states = automata.generate_states(test_data.values, window_size=config.WINDOW_SIZE)
+            num_windows = len(states)
+            scores = np.zeros(num_windows)
+            for t in range(1, num_windows):
+                active_sequence = states[t - 1 : min(t + 2, num_windows)]
+                prob = automata.calculate_path_probability(active_sequence, min_prob=1e-6)
+                scores[t] = 1.0 - prob
+                
+            y_true = test_labels.values[config.WINDOW_SIZE:]
+            y_scores = scores[1:]
+        else:
+            _, val_loader, test_loader_clean = loader.get_dataloaders(
+                train_data.values, val_data.values, test_data.values,
+                train_labels.values, val_labels.values, test_labels.values
+            )
+            model = ModelFactory.get_model(
+                model_type, 
+                scaled_data.shape[1], 
+                config.HIDDEN_SIZE, 
+                config.NUM_LAYERS,
+                dropout=0.2,
+                window_size=config.WINDOW_SIZE
+            ).to(config.DEVICE)
+            checkpoint_path = f"checkpoints/BATADAL_{model_type}_seed{seed}_best.pth"
+            model = load_model(model, checkpoint_path, config.DEVICE)
+            model.eval()
+            y_probs = predict(model, test_loader_clean, config.DEVICE)
+            window_size = len(test_labels) - len(y_probs)
+            y_true = test_labels.values[window_size:]
+            y_scores = y_probs
+            
+        all_scores = y_scores
+        all_labels = y_true
+        
+    return np.array(all_scores), np.array(all_labels)
+
+def main():
+    print("="*80)
+    print("RUNNING ACADEMIC FIGURES VISUALIZATION PIPELINE")
+    print("="*80)
+    
+    from scripts.run_experiments import get_model_predictions
+    models = ["Automata", "LSTM", "GRU", "CNN"]
+    datasets = ["SKAB", "BATADAL"]
+    seed = 42
+    
+    # 1. Generate Confusion Matrices and ROC/PR Curves for each dataset
+    for dataset in datasets:
+        print(f"\nProcessing classifications for {dataset} (Seed {seed})...")
+        preds_dict = {}
+        scores_dict = {}
+        labels_preds_dict = {}
+        labels_scores_dict = {}
+        
+        for model in models:
+            print(f"  Fetching prediction pairs for {model}...")
+            # For confusion matrices
+            y_pred, y_true_bin = get_model_predictions(model, seed, dataset)
+            preds_dict[model] = y_pred
+            labels_preds_dict[model] = y_true_bin
+            
+            # For ROC/PR curves
+            y_score, y_true_score = get_model_scores(model, seed, dataset)
+            scores_dict[model] = y_score
+            labels_scores_dict[model] = y_true_score
+            
+        # Plot Confusion Matrices Grid
+        cm_path = f"results/plots/{dataset}_confusion_matrices.png"
+        plot_confusion_matrices(preds_dict, labels_preds_dict, cm_path)
+        
+        # Plot ROC/PR curves
+        roc_prefix = f"results/plots/{dataset}"
+        plot_roc_pr_curves(scores_dict, labels_scores_dict, roc_prefix)
+        
+    # 2. Plot Sensitivity Heatmaps
+    print("\nProcessing parameter sensitivity heatmaps...")
+    sens_path = "results/plots/parameter_sensitivity_heatmaps.png"
+    plot_sensitivity_heatmaps(sens_path)
+    
+    # 3. Plot Automata transition matrix heatmap
+    print("\nProcessing symbolic Automata transition heatmap...")
+    trans_path = "results/plots/automata_transition_matrix.png"
+    plot_automata_transitions(trans_path)
+    
+    print("\n" + "="*80)
+    print("VISUALIZATION PIPELINE COMPLETED SUCCESSFULLY!")
+    print("="*80)
+
+if __name__ == "__main__":
+    main()
+
 
