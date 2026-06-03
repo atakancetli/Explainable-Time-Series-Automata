@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explainable Time Series Automata Dashboard</title>
+    <!-- Google Fonts & Chart.js -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-glow"></div>
+                <h2>TS-Automata</h2>
+                <p class="subtitle">Explainable ICS Anomaly Detection</p>
+            </div>
+            <nav class="nav-menu">
+                <button class="nav-btn active" data-tab="explorer">
+                    <span class="icon">📈</span> İnteraktif Veri Gezgini
+                </button>
+                <button class="nav-btn" data-tab="explainability">
+                    <span class="icon">🧠</span> Olasılıksal Açıklanabilirlik
+                </button>
+                <button class="nav-btn" data-tab="tables">
+                    <span class="icon">📊</span> Akademik Tablolar
+                </button>
+                <button class="nav-btn" data-tab="gallery">
+                    <span class="icon">🖼️</span> Görsel Rapor Galerisi
+                </button>
+                <button class="nav-btn" data-tab="sensitivity">
+                    <span class="icon">⚙️</span> Parametre Sweeper
+                </button>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="contributor-card">
+                    <p class="contrib-title">Geliştiriciler</p>
+                    <p class="contrib-names">Atakan Cetli & Sadık Günay</p>
+                    <a href="https://github.com/atakancetli/Explainable-Time-Series-Automata" target="_blank" class="github-link">
+                        <span class="gh-icon">🔗</span> GitHub Repository
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header bar -->
+            <header class="top-bar">
+                <div class="header-info">
+                    <h1 id="page-title">İnteraktif Zaman Serisi Anomali Gezgini</h1>
+                    <p id="page-subtitle">Modellerin anomali tahmin başarılarının ve anlık sinyal grafiklerinin karşılaştırmalı analizi</p>
+                </div>
+                <div class="dataset-selector-wrapper">
+                    <label for="dataset-select">Veri Seti Seç:</label>
+                    <select id="dataset-select" class="dropdown-select">
+                        <option value="SKAB">SKAB (Industrial Valve)</option>
+                        <option value="BATADAL">BATADAL (Water Network)</option>
+                    </select>
+                </div>
+            </header>
+
+            <!-- TAB 1: INTERACTIVE EXPLORER -->
+            <section id="tab-explorer" class="tab-section active">
+                <!-- Hero Cards -->
+                <div class="metrics-grid">
+                    <div class="metric-card glass">
+                        <h3>Automata F1-Score</h3>
+                        <p class="metric-value text-indigo" id="automata-f1">-</p>
+                        <span class="metric-desc">Sembolik Yorumlanabilir Otomat</span>
+                    </div>
+                    <div class="metric-card glass">
+                        <h3>1D-CNN F1-Score</h3>
+                        <p class="metric-value text-emerald" id="cnn-f1">-</p>
+                        <span class="metric-desc">Derin Öğrenme Tepesi</span>
+                    </div>
+                    <div class="metric-card glass">
+                        <h3>Eğitim Süresi Kazancı</h3>
+                        <p class="metric-value text-cyan" id="speedup-val">~50x Faster</p>
+                        <span class="metric-desc">Automata vs LSTM/GRU</span>
+                    </div>
+                </div>
+
+                <!-- Main Chart Card -->
+                <div class="chart-card glass">
+                    <div class="chart-header">
+                        <div class="chart-title-group">
+                            <h3>Zaman Serisi & Anomali Deteksiyonu (PCA Birinci Bileşeni - PC1)</h3>
+                            <p>Grafik üzerinde herhangi bir noktaya tıklayarak <strong>Açıklanabilirlik Konsolunu</strong> tetikleyin.</p>
+                        </div>
+                        <div class="chart-legend-toggles">
+                            <label><input type="checkbox" id="toggle-truth" checked> True Anomaly</label>
+                            <label><input type="checkbox" id="toggle-automata" checked> Automata Pred</label>
+                            <label><input type="checkbox" id="toggle-cnn" checked> CNN Pred</label>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="timeSeriesChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: EXPLAINABILITY CONSOLE -->
+            <section id="tab-explainability" class="tab-section">
+                <div class="explainability-layout">
+                    <!-- Local explanation card -->
+                    <div class="explain-card glass">
+                        <div class="explain-header">
+                            <span class="badge" id="explain-status">-</span>
+                            <h3>Timestamp Detaylı Karar Gerekçelendirmesi</h3>
+                        </div>
+                        <div class="explain-body">
+                            <div class="explain-row">
+                                <span class="label">Ölçülen Adım (Time Step):</span>
+                                <span class="value" id="explain-step">-</span>
+                            </div>
+                            <div class="explain-row">
+                                <span class="label">Mevcut Durum (State):</span>
+                                <span class="value code" id="explain-state">-</span>
+                            </div>
+                            <div class="explain-row">
+                                <span class="label">Gözlemlenen Örüntü (Pattern):</span>
+                                <span class="value code" id="explain-pattern">-</span>
+                            </div>
+                            <div class="explain-row">
+                                <span class="label">Edit Mesafesi Eşlemesi (Levenshtein):</span>
+                                <span class="value" id="explain-mapping">-</span>
+                            </div>
+                            <div class="explain-row">
+                                <span class="label">Hesaplanan Yol Olasılığı (Path Probability):</span>
+                                <span class="value highlight" id="explain-prob">-</span>
+                            </div>
+                            <div class="explain-row">
+                                <span class="label">Model Kararı:</span>
+                                <span class="value badge-decision" id="explain-decision">-</span>
+                            </div>
+                            <div class="explain-row">
+                                <span class="label">Güven Skoru (Confidence):</span>
+                                <span class="value" id="explain-confidence">-</span>
+                            </div>
+                            <div class="explain-divider"></div>
+                            <div class="explain-reason-box">
+                                <strong>Karar Gerekçesi (Natural Language Reason):</strong>
+                                <p id="explain-reason">-</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Transitions probability list -->
+                    <div class="transitions-card glass">
+                        <h3>Mevcut Durum Geçiş Aktiviteleri</h3>
+                        <p class="desc">Olasılıksal otomat üzerindeki Markov geçiş yolları</p>
+                        <div class="transitions-list" id="explain-transitions">
+                            <!-- Injected dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: ACADEMIC TABLES -->
+            <section id="tab-tables" class="tab-section">
+                <div class="tables-tabs">
+                    <button class="table-tab-btn active" data-table="t1">Tablo 1: Performans</button>
+                    <button class="table-tab-btn" data-table="t2">Tablo 2: Gürültü Dayanıklılığı</button>
+                    <button class="table-tab-btn" data-table="t3">Tablo 3: Çapraz Veri</button>
+                    <button class="table-tab-btn" data-table="t4">Tablo 4: Parametre Hassasiyeti</button>
+                    <button class="table-tab-btn" data-table="t5">Tablo 5: Çalışma Süresi</button>
+                    <button class="table-tab-btn" data-table="t6">Tablo 6: İstatistiksel Önem</button>
+                </div>
+
+                <div class="table-output-container glass">
+                    <!-- Table 1 -->
+                    <div id="table-t1" class="table-content active">
+                        <h4>Tablo 1: Model Performansı ve Stabilitesi (Ortalama F1-score ± Standart Sapma)</h4>
+                        <table class="academic-table">
+                            <thead>
+                                <tr>
+                                    <th>Model</th>
+                                    <th>SKAB F1-Score (Mean ± Std)</th>
+                                    <th>BATADAL F1-Score (Mean ± Std)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>LSTM Baseline</strong></td>
+                                    <td>0.2490 ± 0.0209</td>
+                                    <td>0.3455 ± 0.0156</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>GRU Baseline</strong></td>
+                                    <td>0.2268 ± 0.0262</td>
+                                    <td>0.4952 ± 0.0917</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>1D-CNN Baseline</strong></td>
+                                    <td>0.2774 ± 0.0306</td>
+                                    <td>0.5467 ± 0.1102</td>
+                                </tr>
+                                <tr>
+                                    <td><strong class="text-indigo">TimeSeriesAutomata</strong></td>
+                                    <td>0.1941 ± 0.0000</td>
+                                    <td>0.5714 ± 0.0000</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Table 2 -->
+                    <div id="table-t2" class="table-content">
+                        <h4>Tablo 2: Gürültü Etkisi Analizi (Ortalama F1-Score)</h4>
+                        <table class="academic-table" id="dyn-table-2">
+                            <!-- Injected dynamically -->
+                        </table>
+                    </div>
+
+                    <!-- Table 3 -->
+                    <div id="table-t3" class="table-content">
+                        <h4>Tablo 3: Cross-Dataset Performans Karşılaştırması (F1-Score)</h4>
+                        <div class="cross-dataset-grids" id="dyn-table-3">
+                            <!-- Injected dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Table 4 -->
+                    <div id="table-t4" class="table-content">
+                        <h4>Tablo 4: TimeSeriesAutomata Parametre Duyarlılık Analizi (Ortalama F1-Score)</h4>
+                        <table class="academic-table" id="dyn-table-4">
+                            <!-- Injected dynamically -->
+                        </table>
+                    </div>
+
+                    <!-- Table 5 -->
+                    <div id="table-t5" class="table-content">
+                        <h4>Tablo 5: Modellerin Çalışma Süresi (Runtime) Karşılaştırması</h4>
+                        <table class="academic-table">
+                            <thead>
+                                <tr>
+                                    <th>Model</th>
+                                    <th>Veri Seti</th>
+                                    <th>Eğitim Süresi (sn)</th>
+                                    <th>Çıkarım Süresi (sn)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>LSTM</strong></td>
+                                    <td>SKAB</td>
+                                    <td>0.3716</td>
+                                    <td>0.0043</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>GRU</strong></td>
+                                    <td>SKAB</td>
+                                    <td>0.7950</td>
+                                    <td>0.0117</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>1D-CNN</strong></td>
+                                    <td>SKAB</td>
+                                    <td>0.2226</td>
+                                    <td>0.0032</td>
+                                </tr>
+                                <tr>
+                                    <td><strong class="text-indigo">Automata</strong></td>
+                                    <td>SKAB</td>
+                                    <td>0.0138</td>
+                                    <td>0.3504</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>LSTM</strong></td>
+                                    <td>BATADAL</td>
+                                    <td>0.2730</td>
+                                    <td>0.0022</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>GRU</strong></td>
+                                    <td>BATADAL</td>
+                                    <td>0.5026</td>
+                                    <td>0.0050</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>1D-CNN</strong></td>
+                                    <td>BATADAL</td>
+                                    <td>0.1077</td>
+                                    <td>0.0014</td>
+                                </tr>
+                                <tr>
+                                    <td><strong class="text-indigo">Automata</strong></td>
+                                    <td>BATADAL</td>
+                                    <td>0.0043</td>
+                                    <td>0.0271</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Table 6 -->
+                    <div id="table-t6" class="table-content">
+                        <h4>Tablo 6: TimeSeriesAutomata ve Derin Öğrenme İstatistiksel Karşılaştırma Matrisi (p-Değerleri)</h4>
+                        <table class="academic-table" id="dyn-table-6">
+                            <!-- Injected dynamically -->
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: VISUAL GALLERY -->
+            <section id="tab-gallery" class="tab-section">
+                <div class="gallery-grid">
+                    <div class="gallery-item glass">
+                        <h4>SKAB ROC ve PR Eğrileri</h4>
+                        <img src="../results/plots/SKAB_roc_pr_curves.png" alt="SKAB ROC PR">
+                    </div>
+                    <div class="gallery-item glass">
+                        <h4>SKAB Hata Matrisleri</h4>
+                        <img src="../results/plots/SKAB_confusion_matrices.png" alt="SKAB Confusion Matrices">
+                    </div>
+                    <div class="gallery-item glass">
+                        <h4>BATADAL ROC ve PR Eğrileri</h4>
+                        <img src="../results/plots/BATADAL_roc_pr_curves.png" alt="BATADAL ROC PR">
+                    </div>
+                    <div class="gallery-item glass">
+                        <h4>BATADAL Hata Matrisleri</h4>
+                        <img src="../results/plots/BATADAL_confusion_matrices.png" alt="BATADAL Confusion Matrices">
+                    </div>
+                    <div class="gallery-item glass">
+                        <h4>Parametre Hassasiyet Isı Haritaları</h4>
+                        <img src="../results/plots/parameter_sensitivity_heatmaps.png" alt="Parameter Sensitivity">
+                    </div>
+                    <div class="gallery-item glass">
+                        <h4>Automata Durum Geçiş Grafiği</h4>
+                        <img src="../results/plots/automata_transition_matrix.png" alt="Automata Transition Matrix">
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 5: SENSITIVITY SWEEPER -->
+            <section id="tab-sensitivity" class="tab-section">
+                <div class="sensitivity-layout">
+                    <div class="sens-controls glass">
+                        <h3>Parametre Simülatörü</h3>
+                        <p class="desc">Aşağıdaki çubukları kaydırarak, pencere ve alfabe boyutlarının F1 başarısı üzerindeki etkisini izleyin.</p>
+                        
+                        <div class="slider-group">
+                            <div class="slider-label">
+                                <span>Pencere Boyutu (w):</span>
+                                <strong id="val-window">4</strong>
+                            </div>
+                            <input type="range" id="slider-window" min="3" max="6" value="4">
+                        </div>
+
+                        <div class="slider-group">
+                            <div class="slider-label">
+                                <span>Alfabe Boyutu (a):</span>
+                                <strong id="val-alphabet">3</strong>
+                            </div>
+                            <input type="range" id="slider-alphabet" min="3" max="6" value="3">
+                        </div>
+                    </div>
+
+                    <div class="sens-results glass">
+                        <h3>Simüle Edilen F1-Score</h3>
+                        <div class="f1-gauge">
+                            <svg viewBox="0 0 100 50" class="gauge-svg">
+                                <path class="gauge-bg" d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke-width="8"></path>
+                                <path class="gauge-fill" id="gauge-fill-arc" d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke-width="8" stroke-dasharray="125" stroke-dashoffset="125"></path>
+                            </svg>
+                            <span class="f1-gauge-value" id="sens-f1-val">0.0000</span>
+                        </div>
+                        <p class="sens-note" id="sens-interpretation">Parametreleri değiştirerek başlayın.</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Inject compiled data store -->
+    <script src="data_store.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
