@@ -301,7 +301,13 @@ This section outlines the finalized directory tree structure of the repository a
 Explainable-Time-Series-Automata/
 ├── configs/
 │   └── config.py               # Hyperparameter declarations and device mappings
+├── dashboard/                  # Interactive HTML/CSS/JS presentation panel
+│   ├── app.js                  # Graphic and explanation interactive logic
+│   ├── data_store.js           # Compiled offline database (CORS bypass)
+│   ├── index.html              # Presentation dashboard UI markup shell
+│   └── style.css               # Glassmorphic dark mode styling sheet
 ├── data/                       # Dataset directories (ignored by git, populated locally)
+
 │   ├── skab/
 │   │   ├── valve1/
 │   │   └── valve2/
@@ -390,6 +396,17 @@ To verify the operational correctness of the entire codebase and validate all ca
 ```bash
 python3 -m unittest discover -s tests
 ```
+
+#### 5. Launch Interactive Presentation Dashboard
+To launch the premium, dark-mode presentation dashboard to showcase interactive anomaly charts, Markov path explainability, Levenshtein unseen mappings, parameter sensitivity sliders, and academic tables (Table 1-6):
+```bash
+# Compile and sync the latest metrics to dashboard's database
+python3 scripts/compile_dashboard_data.py
+
+# Open the dashboard directly in your default browser
+open dashboard/index.html
+```
+
 
 
 
