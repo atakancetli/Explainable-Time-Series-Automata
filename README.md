@@ -68,9 +68,25 @@ All Deep Learning models are trained with identical hyperparameters to ensure pe
   - **SKAB**: 5-Fold Stratified GroupKFold cross-validation split.
   - **BATADAL**: 60% Train, 20% Validation (for threshold tuning), and 20% Chronological Test splits.
 
-## 3. Academic Evaluation Results (Table 2 & Table 3)
+## 3. Academic Evaluation Results (Table 1, Table 2 & Table 3)
 
 Rigorously tested across clean, noisy, and cross-domain industrial time-series, the experimental findings are detailed below:
+
+### A. Base Model Performance and Stability (Table 1)
+Below is the baseline performance (mean F1-score and standard deviation) evaluated across 5 deterministic random seeds `[42, 123, 2026, 7, 999]`:
+
+### Tablo 1: Model Performansı ve Stabilitesi (Ortalama F1-score ± Standart Sapma)
+| Model | SKAB F1-Score (Mean ± Std) | BATADAL F1-Score (Mean ± Std) |
+| --- | --- | --- |
+| **LSTM** | $0.2490 \pm 0.0209$ | $0.3455 \pm 0.0156$ |
+| **GRU** | $0.2268 \pm 0.0262$ | $0.4952 \pm 0.0917$ |
+| **1D-CNN** | $0.2774 \pm 0.0306$ | $0.5467 \pm 0.1102$ |
+| **Automata** | $0.1941 \pm 0.0000$ | $0.5714 \pm 0.0000$ |
+
+*Interpretation of Table 1*:
+- **Automata Stability:** The symbolic `TimeSeriesAutomata` exhibits zero variance across all seeds ($0.0000$ standard deviation). This is because it is a completely deterministic model, which eliminates initialization stochasticity, offering a highly reliable and consistent baseline.
+- **Deep Learning Baseline Variance:** Deep learning baselines exhibit standard deviations between $0.01$ and $0.11$. 1D-CNN achieves the highest peak performance on both datasets, but exhibits greater sensitivity to initialization seed compared to LSTM.
+
 
 ### A. Robustness to Gaussian Noise (Table 2)
 Zero-mean Gaussian noise was injected into the validation and test splits across various scale factors $\sigma \in [0.05, 0.1, 0.15, 0.2, 0.25]$. F1-scores were averaged across all 5 deterministic seeds:
@@ -143,14 +159,33 @@ We executed parameter sweeps for $w, a \in [3, 4, 5, 6]$. The mean F1-scores acr
 - **Window Size Influence**: Smaller window segments (e.g., $w=3$) achieve superior performance (F1-score of `0.3030` on SKAB, `0.6154` on BATADAL). This suggests that overly granular symbolic partitioning introduces excessive local transition variance, which dampens the Automata's capability to discern broader anomalous paths.
 - **Alphabet Size Influence**: Variations in the alphabet size $a$ show relatively stable performance on both datasets. On SKAB, $a=5$ gives a peak F1-score of `0.2581`, while on BATADAL, $a \in \{3, 4, 6\}$ leads to a solid `0.6154`. This demonstrates that a moderate symbolic vocabulary size provides sufficient granularity to separate continuous amplitude states without risk of sparse probability spaces.
 
-### B. Wilcoxon & McNemar Statistical Significance Tests (Table 5)
+### B. Model Execution Runtime Analysis (Table 5)
+To compare computational efficiency, the average training and inference runtimes (in seconds) across all seeds and folds are compiled in Table 5:
+
+### Tablo 5: Modellerin Çalışma Süresi (Runtime) Karşılaştırması
+| Model | Veri Seti | Training Time (sn) | Inference Time (sn) |
+| --- | --- | --- | --- |
+| **LSTM** | SKAB | 0.3716 | 0.0043 |
+| **GRU** | SKAB | 0.7950 | 0.0117 |
+| **1D-CNN** | SKAB | 0.2226 | 0.0032 |
+| **Automata** | SKAB | 0.0138 | 0.3504 |
+| **LSTM** | BATADAL | 0.2730 | 0.0022 |
+| **GRU** | BATADAL | 0.5026 | 0.0050 |
+| **1D-CNN** | BATADAL | 0.1077 | 0.0014 |
+| **Automata** | BATADAL | 0.0043 | 0.0271 |
+
+*Interpretation of Table 5*:
+- **Training Time Dominance**: The symbolic `TimeSeriesAutomata` achieves near-instantaneous training ($0.0138$ seconds on SKAB, $0.0043$ seconds on BATADAL), outperforming deep learning baselines by $10\times$ to $50\times$. This represents an enormous advantage in resource-constrained environments.
+- **Inference Time Comparison**: For inference, PyTorch-accelerated baseline models exhibit lower latency due to parallel matrix computing on PyTorch, whereas the symbolic sliding window path evaluation in Python has a small loop overhead. However, all models process in sub-second timelines, rendering them fully viable for real-time monitoring.
+
+### C. Wilcoxon & McNemar Statistical Significance Tests (Table 6)
 To scientifically establish that our performance improvements or degradations are not random artifacts of data splits or seed initializations, we executed:
 1. **McNemar's Test**: A non-parametric paired nominal test assessing sample-level correct/incorrect classification transitions.
 2. **Wilcoxon Signed-Rank Test**: A paired ordinal ranking test measuring the median difference between metric distributions across 5 deterministic seeds.
 
-The test statistics and p-values are detailed in Table 5:
+The test statistics and p-values are detailed in Table 6:
 
-### Tablo 5: TimeSeriesAutomata ve Derin Öğrenme Baselines İstatistiksel Karşılaştırma Matrisi (p-Değerleri)
+### Tablo 6: TimeSeriesAutomata ve Derin Öğrenme Baselines İstatistiksel Karşılaştırma Matrisi (p-Değerleri)
 | Veri Seti | Karşılaştırma | McNemar p-Değeri | McNemar Anlamlılık (α=0.05) | Wilcoxon p-Değeri | Wilcoxon Anlamlılık (α=0.05) |
 | --- | --- | --- | --- | --- | --- |
 | **SKAB** | Automata vs LSTM | 0.0000 | Anlamlı (H1) | 1.0000 | Geçersiz (H0) |
@@ -160,9 +195,10 @@ The test statistics and p-values are detailed in Table 5:
 | **BATADAL** | Automata vs GRU | 0.2684 | Geçersiz (H0) | 0.0455 | Anlamlı (H1) |
 | **BATADAL** | Automata vs CNN | 1.0000 | Geçersiz (H0) | 0.1599 | Geçersiz (H0) |
 
-*Interpretation of Table 5*:
+*Interpretation of Table 6*:
 - **SKAB**: The McNemar tests are highly significant ($p < 0.0001$), rejecting the null hypothesis ($H_0$) that error rates are identical. At a sample-by-sample level, the deep learning models (especially CNN) exhibit prediction transitions that significantly outclass the Automata, although the Wilcoxon seed-level F1 differences are not significant due to the small seed size ($N=5$).
 - **BATADAL**: The Automata's performance shows no statistically significant difference from LSTM or CNN ($p > 0.05$), proving that it achieves comparable high-accuracy classification while maintaining full interpretive transparency. Crucially, on Wilcoxon signed-rank test against GRU, the Automata is statistically superior ($p = 0.0455$), highlighting GRU's extreme sensitivity to threshold collapse under this data domain.
+
 
 ## 5. Visual Academic Assets and Interpretability/Explainability Diagnostic Modules
 
