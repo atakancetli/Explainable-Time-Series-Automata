@@ -1,0 +1,24 @@
+# Datasets (Ignored by Git, populated locally)
+data/
+
+# Model Checkpoints
+checkpoints/
+
+# Log Files
+logs/
+
+# Local PDF Guides
+yazlab2-EK.pdf
+yazlab2_v3.pdf
+
+# OS/IDE Files
+.DS_Store
+.vscode/
+.idea/
+
+# Python Cache Files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
