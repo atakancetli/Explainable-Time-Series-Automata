@@ -41,134 +41,16 @@ def compile_data():
         with open(baseline_path, "r") as f:
             baseline_data = json.load(f)
 
-    # 5. Extract a sample time-series from SKAB and BATADAL for the interactive chart
-    # Let's load SKAB valve1/skab_file_1.csv
-    skab_sample = []
-    skab_file = "data/skab/valve1/skab_file_1.csv"
-    if os.path.exists(skab_file):
-        df = pd.read_csv(skab_file, sep=";")
-        df = df.head(80)  # Take first 80 timestamps
-        # Check columns
-        # SKAB has sensor columns, anomaly column, datetime index
-        if "anomaly" not in df.columns and "anomaly" in df.index.names:
-            df = df.reset_index()
-        # Find numeric columns excluding anomaly/changepoint/datetime
-        num_cols = [c for c in df.columns if c not in ["datetime", "anomaly", "changepoint"]]
-        # We will use the first numeric column as our display signal
-        display_col = num_cols[0] if len(num_cols) > 0 else df.columns[0]
-        
-        # Calculate mock model predictions to show comparison
-        # Let's make sure predictions align nicely
-        anom_indices = df[df["anomaly"] == 1].index.tolist()
-        
-        for idx, row in df.iterrows():
-            timestamp = str(row.get("datetime", idx))
-            val = float(row[display_col])
-            is_anom = int(row.get("anomaly", 0))
+    # 5. Load dynamic interactive graph data (SKAB_SAMPLE, BATADAL_SAMPLE, EXPLAIN_DATA)
+    interactive_path = "results/metrics/dashboard_interactive_data.json"
+    interactive_data = {}
+    if os.path.exists(interactive_path):
+        with open(interactive_path, "r") as f:
+            interactive_data = json.load(f)
             
-            # Predict labels with slight variations to show models differences
-            skab_sample.append({
-                "time": timestamp,
-                "value": val,
-                "anomaly": is_anom,
-                "pred_automata": 1 if idx in anom_indices or (idx > 20 and idx < 25) else 0,
-                "pred_lstm": 1 if idx in anom_indices or (idx > 22 and idx < 27) else 0,
-                "pred_gru": 1 if idx in anom_indices or (idx > 18 and idx < 22) else 0,
-                "pred_cnn": 1 if idx in anom_indices or (idx > 19 and idx < 26) else 0,
-            })
-            
-    # Load BATADAL sample
-    batadal_sample = []
-    bat_file = "data/batadal/batadal_training_2.csv"
-    if os.path.exists(bat_file):
-        df = pd.read_csv(bat_file)
-        df = df.head(80)  # Take first 80 timestamps
-        display_col = [c for c in df.columns if c not in ["DATETIME", "ATT_FLAG", "anomaly"]][0]
-        
-        anom_indices = df[df["ATT_FLAG"] == 1].index.tolist()
-        
-        for idx, row in df.iterrows():
-            timestamp = str(row.get("DATETIME", idx))
-            val = float(row[display_col])
-            is_anom = int(row.get("ATT_FLAG", 0))
-            
-            batadal_sample.append({
-                "time": timestamp,
-                "value": val,
-                "anomaly": is_anom,
-                "pred_automata": 1 if idx in anom_indices or (idx > 30 and idx < 34) else 0,
-                "pred_lstm": 1 if idx in anom_indices or (idx > 28 and idx < 35) else 0,
-                "pred_gru": 1 if idx in anom_indices or (idx > 32 and idx < 36) else 0,
-                "pred_cnn": 1 if idx in anom_indices or (idx > 29 and idx < 33) else 0,
-            })
-
-    # 6. Generate explainability sample data based on X.E and X.F format
-    explain_data = {
-        "SKAB": [
-            {
-                "time_step": 21,
-                "state": "aabac",
-                "pattern": "aabaf",
-                "status": "unseen",
-                "mapped_to": "aabae",
-                "distance": 1.0,
-                "transitions": [
-                    {"from": "aabac", "to": "aabae", "probability": 0.0025}
-                ],
-                "probability": 0.0025,
-                "decision": "anomaly",
-                "confidence_score": 0.0025,
-                "reason": "Low probability path detected"
-            },
-            {
-                "time_step": 32,
-                "state": "bccab",
-                "pattern": "bccab",
-                "status": "seen",
-                "mapped_to": "bccab",
-                "distance": 0.0,
-                "transitions": [
-                    {"from": "bccab", "to": "ccaba", "probability": 0.8500}
-                ],
-                "probability": 0.8500,
-                "decision": "normal",
-                "confidence_score": 0.8500,
-                "reason": "Normal path transition probability"
-            }
-        ],
-        "BATADAL": [
-            {
-                "time_step": 31,
-                "state": "ddcba",
-                "pattern": "ddcbz",
-                "status": "unseen",
-                "mapped_to": "ddcba",
-                "distance": 1.0,
-                "transitions": [
-                    {"from": "ddcba", "to": "dcbaa", "probability": 0.0040}
-                ],
-                "probability": 0.0040,
-                "decision": "anomaly",
-                "confidence_score": 0.0040,
-                "reason": "Low probability path detected"
-            },
-            {
-                "time_step": 45,
-                "state": "aabaa",
-                "pattern": "aabaa",
-                "status": "seen",
-                "mapped_to": "aabaa",
-                "distance": 0.0,
-                "transitions": [
-                    {"from": "aabaa", "to": "abaaa", "probability": 0.9200}
-                ],
-                "probability": 0.9200,
-                "decision": "normal",
-                "confidence_score": 0.9200,
-                "reason": "Normal path transition probability"
-            }
-        ]
-    }
+    skab_sample = interactive_data.get("SKAB_SAMPLE", [])
+    batadal_sample = interactive_data.get("BATADAL_SAMPLE", [])
+    explain_data = interactive_data.get("EXPLAIN_DATA", {})
 
     # Write output JavaScript file
     os.makedirs("dashboard", exist_ok=True)

@@ -910,6 +910,120 @@ def run_baseline_benchmarks():
         
     return baseline_results
 
+def generate_dashboard_interactive_data():
+    """
+    Generates dynamic interactive graph points and explanations by running the 
+    actual models over a sample window of test data.
+    """
+    import json
+    import os
+    
+    print("\nGenerating dynamic interactive dashboard data...")
+    config = Config()
+    set_seed(42)
+    
+    dashboard_data = {
+        "SKAB_SAMPLE": [],
+        "BATADAL_SAMPLE": [],
+        "EXPLAIN_DATA": {
+            "SKAB": [],
+            "BATADAL": []
+        }
+    }
+    
+    for dataset in ["SKAB", "BATADAL"]:
+        loader = DataLoader(dataset)
+        if dataset == "SKAB":
+            raw_data = loader.load_skab(config.SKAB_PATH)
+            folds = list(loader.split_by_group(raw_data, n_splits=5, stratified=True))
+            train_idx, test_idx = folds[0]
+            train_df = raw_data.iloc[train_idx]
+            test_df = raw_data.iloc[test_idx]
+        else:
+            raw_data = loader.load_batadal(config.BATADAL_TRAIN, config.BATADAL_TEST)
+            train_df, val_df, test_df = loader.split_chronological(raw_data)
+            
+        if dataset == "SKAB":
+            train_scaled, _, test_scaled, train_y, _, test_y = loader.preprocess_skab(train_df, test_df, test_df, train_df['anomaly'], test_df['anomaly'], test_df['anomaly'])
+        else:
+            train_scaled, _, test_scaled, train_y, _, test_y = loader.preprocess_batadal(train_df, val_df, test_df, train_df['anomaly'], val_df['anomaly'], test_df['anomaly'])
+            
+        sample_len = min(100, len(test_scaled))
+        test_slice = test_scaled.iloc[:sample_len]
+        label_slice = test_y.iloc[:sample_len]
+        
+        display_values = test_slice.values[:, 0]
+        
+        # Handle string conversion for datetime indices
+        if isinstance(test_slice.index, pd.DatetimeIndex):
+            timestamps = test_slice.index.strftime('%Y-%m-%d %H:%M:%S').tolist()
+        else:
+            timestamps = test_slice.index.astype(str).tolist()
+            
+        automata = TimeSeriesAutomata(alphabet_size=config.ALPHABET_SIZE, word_size=config.WORD_SIZE)
+        automata.fit(train_scaled.values, window_size=config.WINDOW_SIZE)
+        
+        auto_preds = automata.predict_anomaly(test_slice.values, window_size=config.WINDOW_SIZE, threshold=config.ANOMALY_THRESHOLD)
+        auto_preds_padded = np.zeros(sample_len, dtype=int)
+        if len(auto_preds) > 0:
+            auto_preds_padded[config.WINDOW_SIZE - 1:config.WINDOW_SIZE - 1 + len(auto_preds)] = auto_preds
+            
+        explanations = automata.explain_decision(test_slice.values, window_size=config.WINDOW_SIZE, threshold=config.ANOMALY_THRESHOLD)
+        for idx, exp in enumerate(explanations):
+            exp["time_step"] = config.WINDOW_SIZE + idx
+        dashboard_data["EXPLAIN_DATA"][dataset] = explanations
+        
+        dl_preds = {}
+        for dl_model in ["LSTM", "GRU", "CNN"]:
+            try:
+                model = ModelFactory.get_model(
+                    dl_model, 
+                    train_scaled.shape[1], 
+                    config.HIDDEN_SIZE, 
+                    config.NUM_LAYERS,
+                    dropout=0.2,
+                    window_size=config.WINDOW_SIZE
+                ).to(config.DEVICE)
+                checkpoint_path = f"checkpoints/{dataset}_{dl_model}_seed42_best.pth"
+                
+                slice_dataset = TimeSeriesDataset(test_slice.values, label_slice.values, config.WINDOW_SIZE)
+                slice_loader = TorchDataLoader(slice_dataset, batch_size=config.BATCH_SIZE, shuffle=False)
+                
+                if os.path.exists(checkpoint_path):
+                    model = load_model(model, checkpoint_path, config.DEVICE)
+                    model.eval()
+                    y_probs = predict(model, slice_loader, config.DEVICE)
+                    preds = (y_probs >= 0.5).astype(int)
+                    
+                    preds_padded = np.zeros(sample_len, dtype=int)
+                    if len(preds) > 0:
+                        preds_padded[config.WINDOW_SIZE:] = preds
+                    dl_preds[dl_model] = preds_padded
+                else:
+                    dl_preds[dl_model] = np.zeros(sample_len, dtype=int)
+            except Exception as e:
+                print(f"Error getting DL predictions for {dl_model}: {e}")
+                dl_preds[dl_model] = np.zeros(sample_len, dtype=int)
+                
+        sample_arr = []
+        for i in range(sample_len):
+            sample_arr.append({
+                "time": timestamps[i],
+                "value": float(display_values[i]),
+                "anomaly": int(label_slice.values[i]),
+                "pred_automata": int(auto_preds_padded[i]),
+                "pred_lstm": int(dl_preds.get("LSTM", np.zeros(sample_len))[i]),
+                "pred_gru": int(dl_preds.get("GRU", np.zeros(sample_len))[i]),
+                "pred_cnn": int(dl_preds.get("CNN", np.zeros(sample_len))[i])
+            })
+            
+        dashboard_data[f"{dataset}_SAMPLE"] = sample_arr
+        
+    os.makedirs("results/metrics", exist_ok=True)
+    with open("results/metrics/dashboard_interactive_data.json", "w") as f:
+        json.dump(dashboard_data, f, indent=4)
+    print("Successfully exported dashboard interactive data!")
+
 def compile_academic_tables():
     """
     Compiles and prints the academic markdown tables for the report.
@@ -1057,6 +1171,8 @@ if __name__ == "__main__":
     run_sensitivity_sweeps()
     print("\nRunning Statistical Significance Tests...")
     run_statistical_tests()
+    print("\nGenerating Interactive Graph Data...")
+    generate_dashboard_interactive_data()
     print("\nCompiling Academic Tables...")
     compile_academic_tables()
 
