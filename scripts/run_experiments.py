@@ -923,7 +923,7 @@ def compile_academic_tables():
             stats_data = json.load(f)
             
         print("\n### Tablo 5: TimeSeriesAutomata ve Derin Öğrenme Baselines İstatistiksel Karşılaştırma Matrisi (p-Değerleri)")
-        print("| Veri Seti | Karşılaştırma | McNemar p-Değeri | McNemar Anlamlılık (α=0.05) | Wilcoxon p-Değeri | Wilcoxon Anlamlılık (α=0.05) |")
+        print("| Veri Seti | Karşılaştırma | McNemar p-Değeri | McNemar Anlamlılık (alpha=0.05) | Wilcoxon p-Değeri | Wilcoxon Anlamlılık (alpha=0.05) |")
         print("| --- | --- | --- | --- | --- | --- |")
         
         for dataset in ["SKAB", "BATADAL"]:

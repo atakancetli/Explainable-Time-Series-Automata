@@ -5,21 +5,21 @@
                 "mcnemar": {
                     "contingency_table": [
                         [
-                            83,
-                            47
+                            85,
+                            55
                         ],
                         [
-                            172,
-                            498
+                            170,
+                            490
                         ]
                     ],
-                    "statistic": 70.21004566210046,
-                    "p_value": 0.0,
+                    "statistic": 57.76,
+                    "p_value": 2.964295475749168e-14,
                     "significant": true
                 },
                 "wilcoxon": {
-                    "statistic": 7.0,
-                    "p_value": 1.0,
+                    "statistic": 6.0,
+                    "p_value": 0.8125,
                     "significant": false
                 }
             },
@@ -27,21 +27,21 @@
                 "mcnemar": {
                     "contingency_table": [
                         [
-                            90,
-                            40
+                            92,
+                            48
                         ],
                         [
-                            147,
-                            523
+                            145,
+                            515
                         ]
                     ],
-                    "statistic": 60.0855614973262,
-                    "p_value": 9.103828801926284e-15,
+                    "statistic": 47.751295336787564,
+                    "p_value": 4.83868500822382e-12,
                     "significant": true
                 },
                 "wilcoxon": {
-                    "statistic": 2.0,
-                    "p_value": 0.1875,
+                    "statistic": 3.0,
+                    "p_value": 0.3125,
                     "significant": false
                 }
             },
@@ -49,21 +49,21 @@
                 "mcnemar": {
                     "contingency_table": [
                         [
-                            92,
-                            38
+                            101,
+                            39
                         ],
                         [
-                            306,
-                            364
+                            297,
+                            363
                         ]
                     ],
-                    "statistic": 207.23546511627907,
+                    "statistic": 196.57440476190476,
                     "p_value": 0.0,
                     "significant": true
                 },
                 "wilcoxon": {
-                    "statistic": 0.0,
-                    "p_value": 0.0625,
+                    "statistic": 1.0,
+                    "p_value": 0.125,
                     "significant": false
                 }
             },
@@ -155,7 +155,7 @@
                 },
                 "wilcoxon": {
                     "statistic": 4.0,
-                    "p_value": 0.8758960579229409,
+                    "p_value": 1.0,
                     "significant": false
                 }
             },
@@ -172,13 +172,13 @@
                         ]
                     ],
                     "statistic": 1.225,
-                    "p_value": 0.2683816272927608,
+                    "p_value": 0.26838162729276105,
                     "significant": false
                 },
                 "wilcoxon": {
                     "statistic": 0.0,
-                    "p_value": 0.045500263896358396,
-                    "significant": true
+                    "p_value": 0.125,
+                    "significant": false
                 }
             },
             "Automata_vs_CNN": {
@@ -199,7 +199,7 @@
                 },
                 "wilcoxon": {
                     "statistic": 0.0,
-                    "p_value": 0.15985367483762747,
+                    "p_value": 0.5,
                     "significant": false
                 }
             },
@@ -243,7 +243,7 @@
                 },
                 "wilcoxon": {
                     "statistic": 5.0,
-                    "p_value": 0.7772974107895215,
+                    "p_value": 1.0,
                     "significant": false
                 }
             },
@@ -265,7 +265,7 @@
                 },
                 "wilcoxon": {
                     "statistic": 0.0,
-                    "p_value": 0.05561496886688285,
+                    "p_value": 0.125,
                     "significant": false
                 }
             }

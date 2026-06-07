@@ -4,36 +4,36 @@ const ROBUSTNESS_DATA = [
     "dataset": "SKAB",
     "model": "Automata",
     "noise_scale": 0.05,
-    "orig_f1": 0.1940939495287321,
-    "orig_precision": 0.1122615530510267,
+    "orig_f1": 0.1954799509147335,
+    "orig_precision": 0.1130337538232275,
     "orig_recall": 1.0,
-    "orig_accuracy": 0.1625,
-    "noisy_f1": 0.1940932458332134,
-    "noisy_precision": 0.1121610778189725,
-    "noisy_recall": 1.0,
-    "noisy_accuracy": 0.1662499999999999
-  },
-  {
-    "dataset": "SKAB",
-    "model": "Automata",
-    "noise_scale": 0.1,
-    "orig_f1": 0.1940939495287321,
-    "orig_precision": 0.1122615530510267,
-    "orig_recall": 1.0,
-    "orig_accuracy": 0.1625,
-    "noisy_f1": 0.1945529137928814,
-    "noisy_precision": 0.1125344025344025,
+    "orig_accuracy": 0.175,
+    "noisy_f1": 0.1940345218720504,
+    "noisy_precision": 0.1121265177844125,
     "noisy_recall": 1.0,
     "noisy_accuracy": 0.16625
   },
   {
     "dataset": "SKAB",
     "model": "Automata",
-    "noise_scale": 0.15,
-    "orig_f1": 0.1940939495287321,
-    "orig_precision": 0.1122615530510267,
+    "noise_scale": 0.1,
+    "orig_f1": 0.1954799509147335,
+    "orig_precision": 0.1130337538232275,
     "orig_recall": 1.0,
-    "orig_accuracy": 0.1625,
+    "orig_accuracy": 0.175,
+    "noisy_f1": 0.1933338575632207,
+    "noisy_precision": 0.1117562617562617,
+    "noisy_recall": 1.0,
+    "noisy_accuracy": 0.15875
+  },
+  {
+    "dataset": "SKAB",
+    "model": "Automata",
+    "noise_scale": 0.15,
+    "orig_f1": 0.1954799509147335,
+    "orig_precision": 0.1130337538232275,
+    "orig_recall": 1.0,
+    "orig_accuracy": 0.175,
     "noisy_f1": 0.1932533615273471,
     "noisy_precision": 0.1116929016929016,
     "noisy_recall": 1.0,
@@ -43,26 +43,26 @@ const ROBUSTNESS_DATA = [
     "dataset": "SKAB",
     "model": "Automata",
     "noise_scale": 0.2,
-    "orig_f1": 0.1940939495287321,
-    "orig_precision": 0.1122615530510267,
+    "orig_f1": 0.1954799509147335,
+    "orig_precision": 0.1130337538232275,
     "orig_recall": 1.0,
-    "orig_accuracy": 0.1625,
-    "noisy_f1": 0.1897516976129467,
-    "noisy_precision": 0.1096485496485496,
+    "orig_accuracy": 0.175,
+    "noisy_f1": 0.1895015412652294,
+    "noisy_precision": 0.1095099495099495,
     "noisy_recall": 0.95,
-    "noisy_accuracy": 0.16
+    "noisy_accuracy": 0.1575
   },
   {
     "dataset": "SKAB",
     "model": "Automata",
     "noise_scale": 0.25,
-    "orig_f1": 0.1940939495287321,
-    "orig_precision": 0.1122615530510267,
+    "orig_f1": 0.1954799509147335,
+    "orig_precision": 0.1130337538232275,
     "orig_recall": 1.0,
-    "orig_accuracy": 0.1625,
-    "noisy_f1": 0.1869516137153018,
-    "noisy_precision": 0.108004158004158,
-    "noisy_recall": 0.9428571428571428,
+    "orig_accuracy": 0.175,
+    "noisy_f1": 0.188532641383286,
+    "noisy_precision": 0.1088704088704088,
+    "noisy_recall": 0.95,
     "noisy_accuracy": 0.155
   },
   {
@@ -562,37 +562,37 @@ const CROSS_DATASET_DATA = [
     "train_dataset": "BATADAL",
     "test_dataset": "SKAB",
     "model": "Automata",
-    "f1": 0.2580645161290322,
-    "precision": 0.1481481481481481,
+    "f1": 0.0666666666666666,
+    "precision": 0.0344827586206896,
     "recall": 1.0,
-    "accuracy": 0.2333333333333333
+    "accuracy": 0.0666666666666666
   },
   {
     "train_dataset": "BATADAL",
     "test_dataset": "SKAB",
     "model": "LSTM",
-    "f1": 0.2352941176470588,
-    "precision": 0.1333333333333333,
-    "recall": 1.0,
-    "accuracy": 0.1333333333333333
+    "f1": 0.0,
+    "precision": 0.0,
+    "recall": 0.0,
+    "accuracy": 0.6466666666666666
   },
   {
     "train_dataset": "BATADAL",
     "test_dataset": "SKAB",
     "model": "GRU",
-    "f1": 0.2367201426024955,
-    "precision": 0.1342528735632183,
-    "recall": 1.0,
-    "accuracy": 0.1399999999999999
+    "f1": 0.0137931034482758,
+    "precision": 0.0071428571428571,
+    "recall": 0.2,
+    "accuracy": 0.6733333333333333
   },
   {
     "train_dataset": "BATADAL",
     "test_dataset": "SKAB",
     "model": "CNN",
-    "f1": 0.1542016806722689,
-    "precision": 0.090532212885154,
-    "recall": 0.55,
-    "accuracy": 0.4733333333333333
+    "f1": 0.0525027808676306,
+    "precision": 0.0271428571428571,
+    "recall": 0.8,
+    "accuracy": 0.1266666666666666
   }
 ];
 const SENSITIVITY_DATA = [
@@ -600,73 +600,73 @@ const SENSITIVITY_DATA = [
     "dataset": "SKAB",
     "parameter": "window_size",
     "value": 3,
-    "f1": 0.303030303030303,
-    "precision": 0.1851851851851851,
-    "recall": 0.8333333333333334,
-    "accuracy": 0.3783783783783784
+    "f1": 0.054054054054054,
+    "precision": 0.0277777777777777,
+    "recall": 1.0,
+    "accuracy": 0.054054054054054
   },
   {
     "dataset": "SKAB",
     "parameter": "window_size",
     "value": 4,
-    "f1": 0.2941176470588235,
-    "precision": 0.1785714285714285,
-    "recall": 0.8333333333333334,
-    "accuracy": 0.3333333333333333
+    "f1": 0.0,
+    "precision": 0.0,
+    "recall": 0.0,
+    "accuracy": 0.4166666666666667
   },
   {
     "dataset": "SKAB",
     "parameter": "window_size",
     "value": 5,
-    "f1": 0.25,
-    "precision": 0.1428571428571428,
-    "recall": 1.0,
-    "accuracy": 0.1428571428571428
+    "f1": 0.0,
+    "precision": 0.0,
+    "recall": 0.0,
+    "accuracy": 0.2285714285714285
   },
   {
     "dataset": "SKAB",
     "parameter": "window_size",
     "value": 6,
-    "f1": 0.2631578947368421,
-    "precision": 0.1515151515151515,
+    "f1": 0.0588235294117647,
+    "precision": 0.0303030303030303,
     "recall": 1.0,
-    "accuracy": 0.1764705882352941
+    "accuracy": 0.0588235294117647
   },
   {
     "dataset": "SKAB",
     "parameter": "alphabet_size",
     "value": 3,
-    "f1": 0.2424242424242424,
-    "precision": 0.1379310344827586,
+    "f1": 0.0666666666666666,
+    "precision": 0.0344827586206896,
     "recall": 1.0,
-    "accuracy": 0.1666666666666666
+    "accuracy": 0.0666666666666666
   },
   {
     "dataset": "SKAB",
     "parameter": "alphabet_size",
     "value": 4,
-    "f1": 0.2424242424242424,
-    "precision": 0.1379310344827586,
+    "f1": 0.0833333333333333,
+    "precision": 0.0434782608695652,
     "recall": 1.0,
-    "accuracy": 0.1666666666666666
+    "accuracy": 0.2666666666666666
   },
   {
     "dataset": "SKAB",
     "parameter": "alphabet_size",
     "value": 5,
-    "f1": 0.2580645161290322,
-    "precision": 0.1481481481481481,
+    "f1": 0.0714285714285714,
+    "precision": 0.037037037037037,
     "recall": 1.0,
-    "accuracy": 0.2333333333333333
+    "accuracy": 0.1333333333333333
   },
   {
     "dataset": "SKAB",
     "parameter": "alphabet_size",
     "value": 6,
-    "f1": 0.2424242424242424,
-    "precision": 0.1379310344827586,
+    "f1": 0.0666666666666666,
+    "precision": 0.0344827586206896,
     "recall": 1.0,
-    "accuracy": 0.1666666666666666
+    "accuracy": 0.0666666666666666
   },
   {
     "dataset": "BATADAL",
@@ -748,21 +748,21 @@ const STATISTICAL_DATA = {
         "mcnemar": {
           "contingency_table": [
             [
-              83,
-              47
+              85,
+              55
             ],
             [
-              172,
-              498
+              170,
+              490
             ]
           ],
-          "statistic": 70.21004566210046,
-          "p_value": 0.0,
+          "statistic": 57.76,
+          "p_value": 2.964295475749168e-14,
           "significant": true
         },
         "wilcoxon": {
-          "statistic": 7.0,
-          "p_value": 1.0,
+          "statistic": 6.0,
+          "p_value": 0.8125,
           "significant": false
         }
       },
@@ -770,21 +770,21 @@ const STATISTICAL_DATA = {
         "mcnemar": {
           "contingency_table": [
             [
-              90,
-              40
+              92,
+              48
             ],
             [
-              147,
-              523
+              145,
+              515
             ]
           ],
-          "statistic": 60.0855614973262,
-          "p_value": 9.103828801926284e-15,
+          "statistic": 47.751295336787564,
+          "p_value": 4.83868500822382e-12,
           "significant": true
         },
         "wilcoxon": {
-          "statistic": 2.0,
-          "p_value": 0.1875,
+          "statistic": 3.0,
+          "p_value": 0.3125,
           "significant": false
         }
       },
@@ -792,21 +792,21 @@ const STATISTICAL_DATA = {
         "mcnemar": {
           "contingency_table": [
             [
-              92,
-              38
+              101,
+              39
             ],
             [
-              306,
-              364
+              297,
+              363
             ]
           ],
-          "statistic": 207.23546511627907,
+          "statistic": 196.57440476190476,
           "p_value": 0.0,
           "significant": true
         },
         "wilcoxon": {
-          "statistic": 0.0,
-          "p_value": 0.0625,
+          "statistic": 1.0,
+          "p_value": 0.125,
           "significant": false
         }
       },
@@ -898,7 +898,7 @@ const STATISTICAL_DATA = {
         },
         "wilcoxon": {
           "statistic": 4.0,
-          "p_value": 0.8758960579229409,
+          "p_value": 1.0,
           "significant": false
         }
       },
@@ -915,13 +915,13 @@ const STATISTICAL_DATA = {
             ]
           ],
           "statistic": 1.225,
-          "p_value": 0.2683816272927608,
+          "p_value": 0.26838162729276105,
           "significant": false
         },
         "wilcoxon": {
           "statistic": 0.0,
-          "p_value": 0.045500263896358396,
-          "significant": true
+          "p_value": 0.125,
+          "significant": false
         }
       },
       "Automata_vs_CNN": {
@@ -942,7 +942,7 @@ const STATISTICAL_DATA = {
         },
         "wilcoxon": {
           "statistic": 0.0,
-          "p_value": 0.15985367483762747,
+          "p_value": 0.5,
           "significant": false
         }
       },
@@ -986,7 +986,7 @@ const STATISTICAL_DATA = {
         },
         "wilcoxon": {
           "statistic": 5.0,
-          "p_value": 0.7772974107895215,
+          "p_value": 1.0,
           "significant": false
         }
       },
@@ -1008,7 +1008,7 @@ const STATISTICAL_DATA = {
         },
         "wilcoxon": {
           "statistic": 0.0,
-          "p_value": 0.05561496886688285,
+          "p_value": 0.125,
           "significant": false
         }
       }
@@ -1848,7 +1848,7 @@ const BATADAL_SAMPLE = [
   },
   {
     "time": "2026-05-21 18:00:00",
-    "value": 2.8377536617135317,
+    "value": 2.837753661713532,
     "anomaly": 0,
     "pred_automata": 0,
     "pred_lstm": 0,
@@ -2064,7 +2064,7 @@ const BATADAL_SAMPLE = [
   },
   {
     "time": "2026-05-22 18:00:00",
-    "value": -3.4673807792786597,
+    "value": -3.46738077927866,
     "anomaly": 0,
     "pred_automata": 0,
     "pred_lstm": 0,
@@ -2091,7 +2091,7 @@ const BATADAL_SAMPLE = [
   },
   {
     "time": "2026-05-22 21:00:00",
-    "value": -2.0318331962644036,
+    "value": -2.031833196264404,
     "anomaly": 0,
     "pred_automata": 0,
     "pred_lstm": 0,

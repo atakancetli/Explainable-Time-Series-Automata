@@ -301,7 +301,7 @@ function renderDynamicTables(datasetName) {
                 const noiseF1s = [];
                 for (const scale of [0.05, 0.1, 0.15, 0.2, 0.25]) {
                     const row = sub.find(r => Math.abs(r.noise_scale - scale) < 1e-4);
-                    noiseF1s.append(row ? row.noisy_f1.toFixed(4) : "-");
+                    noiseF1s.push(row ? row.noisy_f1.toFixed(4) : "-");
                 }
                 const tr = document.createElement("tr");
                 tr.innerHTML = `

@@ -177,7 +177,7 @@ const EXPLAIN_DATA = {json.dumps(explain_data, indent=2)};
 
     with open("dashboard/data_store.js", "w") as f:
         f.write(js_content)
-    print("✓ Successfully generated dashboard/data_store.js!")
+    print("[SUCCESS] Successfully generated dashboard/data_store.js!")
 
 if __name__ == "__main__":
     compile_data()
