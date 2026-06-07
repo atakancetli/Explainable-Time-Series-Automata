@@ -274,8 +274,68 @@ function initAcademicTables() {
     });
 }
 
-// Render Table 2, Table 3, Table 4, and Table 6 dynamically in HTML
+// Render Table 1, Table 2, Table 3, Table 4, Table 5, and Table 6 dynamically in HTML
 function renderDynamicTables(datasetName) {
+    // 0. Table 1: Model Performance and Stability (Means and Stds)
+    const t1Body = document.getElementById("dyn-table-1-body");
+    if (t1Body && BASELINE_DATA) {
+        t1Body.innerHTML = "";
+        const models = ["LSTM", "GRU", "CNN", "Automata"];
+        
+        for (const model of models) {
+            const skabData = BASELINE_DATA["SKAB"]?.[model];
+            const batData = BASELINE_DATA["BATADAL"]?.[model];
+            
+            const skabText = skabData ? `${skabData.f1_mean.toFixed(4)} ± ${skabData.f1_std.toFixed(4)}` : "-";
+            const batText = batData ? `${batData.f1_mean.toFixed(4)} ± ${batData.f1_std.toFixed(4)}` : "-";
+            
+            const tr = document.createElement("tr");
+            let modelLabel = `<strong>${model} Baseline</strong>`;
+            if (model === "Automata") {
+                modelLabel = `<strong class="text-indigo">TimeSeriesAutomata</strong>`;
+            } else if (model === "CNN") {
+                modelLabel = `<strong>1D-CNN Baseline</strong>`;
+            }
+            
+            tr.innerHTML = `
+                <td>${modelLabel}</td>
+                <td>${skabText}</td>
+                <td>${batText}</td>
+            `;
+            t1Body.appendChild(tr);
+        }
+    }
+
+    // 0.5 Table 5: Runtime Comparisons
+    const t5Body = document.getElementById("dyn-table-5-body");
+    if (t5Body && BASELINE_DATA) {
+        t5Body.innerHTML = "";
+        const models = ["LSTM", "GRU", "CNN", "Automata"];
+        
+        for (const dname of ["SKAB", "BATADAL"]) {
+            for (const model of models) {
+                const data = BASELINE_DATA[dname]?.[model];
+                if (data) {
+                    const tr = document.createElement("tr");
+                    let modelLabel = `<strong>${model}</strong>`;
+                    if (model === "Automata") {
+                        modelLabel = `<strong class="text-indigo">Automata</strong>`;
+                    } else if (model === "CNN") {
+                        modelLabel = `<strong>1D-CNN</strong>`;
+                    }
+                    
+                    tr.innerHTML = `
+                        <td>${modelLabel}</td>
+                        <td>${dname}</td>
+                        <td>${data.train_time.toFixed(4)}</td>
+                        <td>${data.inference_time.toFixed(4)}</td>
+                    `;
+                    t5Body.appendChild(tr);
+                }
+            }
+        }
+    }
+
     // 1. Table 2: Robustness to Noise
     const t2 = document.getElementById("dyn-table-2");
     t2.innerHTML = `

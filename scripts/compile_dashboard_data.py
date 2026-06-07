@@ -34,6 +34,13 @@ def compile_data():
         with open(stats_path, "r") as f:
             statistical_data = json.load(f)
 
+    # 4.5 Load baseline benchmarks
+    baseline_path = "results/metrics/baseline_results.json"
+    baseline_data = {}
+    if os.path.exists(baseline_path):
+        with open(baseline_path, "r") as f:
+            baseline_data = json.load(f)
+
     # 5. Extract a sample time-series from SKAB and BATADAL for the interactive chart
     # Let's load SKAB valve1/skab_file_1.csv
     skab_sample = []
@@ -170,6 +177,7 @@ const ROBUSTNESS_DATA = {json.dumps(robustness_data, indent=2)};
 const CROSS_DATASET_DATA = {json.dumps(cross_data, indent=2)};
 const SENSITIVITY_DATA = {json.dumps(sensitivity_data, indent=2)};
 const STATISTICAL_DATA = {json.dumps(statistical_data, indent=2)};
+const BASELINE_DATA = {json.dumps(baseline_data, indent=2)};
 const SKAB_SAMPLE = {json.dumps(skab_sample, indent=2)};
 const BATADAL_SAMPLE = {json.dumps(batadal_sample, indent=2)};
 const EXPLAIN_DATA = {json.dumps(explain_data, indent=2)};

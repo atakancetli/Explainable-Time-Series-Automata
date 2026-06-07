@@ -1015,6 +1015,7 @@ const STATISTICAL_DATA = {
     }
   }
 };
+const BASELINE_DATA = {};
 const SKAB_SAMPLE = [
   {
     "time": "2026-05-20 00:00:00",
