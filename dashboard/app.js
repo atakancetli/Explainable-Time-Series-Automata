@@ -82,10 +82,13 @@ function loadDataset(datasetName) {
         cnnF1.textContent = cnnData.orig_f1.toFixed(4);
     }
     
-    if (datasetName === "SKAB") {
-        speedupVal.textContent = "~27x Faster";
+    if (BASELINE_DATA && BASELINE_DATA[datasetName]) {
+        const autoTrainTime = BASELINE_DATA[datasetName]["Automata"]?.train_time || 0.01;
+        const lstmTrainTime = BASELINE_DATA[datasetName]["LSTM"]?.train_time || 0.01;
+        const speedup = Math.round(lstmTrainTime / autoTrainTime);
+        speedupVal.textContent = `~${speedup}x Faster`;
     } else {
-        speedupVal.textContent = "~116x Faster";
+        speedupVal.textContent = "-";
     }
     
     // 2. Render Time-Series Chart
