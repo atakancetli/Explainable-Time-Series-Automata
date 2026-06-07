@@ -69,18 +69,22 @@ function initDatasetSelector() {
 
 // Load selected dataset variables and render charts
 function loadDataset(datasetName) {
-    // 1. Update metric cards
+    // 1. Update metric cards dynamically from ROBUSTNESS_DATA
     const automataF1 = document.getElementById("automata-f1");
     const cnnF1 = document.getElementById("cnn-f1");
     const speedupVal = document.getElementById("speedup-val");
     
+    const autoData = ROBUSTNESS_DATA.find(r => r.dataset === datasetName && r.model === "Automata");
+    const cnnData = ROBUSTNESS_DATA.find(r => r.dataset === datasetName && r.model === "CNN");
+    
+    if (autoData && cnnData) {
+        automataF1.textContent = autoData.orig_f1.toFixed(4);
+        cnnF1.textContent = cnnData.orig_f1.toFixed(4);
+    }
+    
     if (datasetName === "SKAB") {
-        automataF1.textContent = "0.1941";
-        cnnF1.textContent = "0.2774";
         speedupVal.textContent = "~27x Faster";
     } else {
-        automataF1.textContent = "0.5714";
-        cnnF1.textContent = "0.4823";
         speedupVal.textContent = "~116x Faster";
     }
     
