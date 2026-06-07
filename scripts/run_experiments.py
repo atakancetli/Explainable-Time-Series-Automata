@@ -11,6 +11,34 @@ from utils.train_utils import load_model, predict, set_seed
 from utils.metrics import calculate_metrics, save_results
 from utils.robustness import inject_gaussian_noise, calculate_unseen_metrics
 from torch.utils.data import DataLoader as TorchDataLoader
+import shutil
+
+def clean_previous_results():
+    """
+    Completely deletes old metrics and plots before starting a new test run,
+    ensuring that no old hardcoded or cached data remains in the application.
+    """
+    print("Cleaning up old results from previous tests...")
+    metrics_dir = "results/metrics"
+    if os.path.exists(metrics_dir):
+        for file in os.listdir(metrics_dir):
+            file_path = os.path.join(metrics_dir, file)
+            try:
+                if os.path.isfile(file_path):
+                    os.unlink(file_path)
+            except Exception as e:
+                print(f"Error deleting {file_path}: {e}")
+                
+    plots_dir = "results/plots"
+    if os.path.exists(plots_dir):
+        for file in os.listdir(plots_dir):
+            file_path = os.path.join(plots_dir, file)
+            try:
+                if os.path.isfile(file_path):
+                    os.unlink(file_path)
+            except Exception as e:
+                print(f"Error deleting {file_path}: {e}")
+    print("Cleanup complete. Starting fresh experiments!\n" + "-"*50)
 
 def evaluate_automata_skab_kfold_robustness(seed, noise_scale=0.1):
     """
@@ -1017,6 +1045,8 @@ def compile_academic_tables():
     print("\n" + "="*80)
 
 if __name__ == "__main__":
+    clean_previous_results()
+    
     print("Running Baseline Benchmarks (Means, Stds, Runtimes)...")
     run_baseline_benchmarks()
     print("\nRunning Robustness Sweeps...")
