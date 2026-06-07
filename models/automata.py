@@ -19,7 +19,7 @@ class TimeSeriesAutomata:
       4. Path Probability & Anomaly Scoring: Computes rolling sequence path probabilities for explaining predictions.
 
     """
-    def __init__(self, alphabet_size=5, word_size=10):
+    def __init__(self, alphabet_size=3, word_size=4):
         """
         Initializes the TimeSeriesAutomata model.
 

@@ -23,4 +23,4 @@ class LSTMModel(nn.Module):
         out, _ = self.lstm(x)
         out = out[:, -1, :]
         out = self.fc(out)
-        return self.sigmoid(out).squeeze()
+        return self.sigmoid(out).squeeze(dim=-1)

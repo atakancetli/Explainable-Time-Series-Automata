@@ -132,7 +132,7 @@ def predict(model, dataloader, device):
     preds = []
     with torch.no_grad():
         for x in dataloader:
-            if isinstance(x, list): x = x[0]
+            if isinstance(x, (list, tuple)): x = x[0]
             x = x.to(device)
             output = model(x)
             preds.extend(output.cpu().numpy())

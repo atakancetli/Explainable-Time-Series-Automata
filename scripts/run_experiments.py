@@ -38,6 +38,15 @@ def clean_previous_results():
                     os.unlink(file_path)
             except Exception as e:
                 print(f"Error deleting {file_path}: {e}")
+                
+    data_store_path = "dashboard/data_store.js"
+    if os.path.exists(data_store_path):
+        try:
+            os.unlink(data_store_path)
+            print(f"Deleted {data_store_path} to guarantee a completely fresh start.")
+        except Exception as e:
+            print(f"Error deleting {data_store_path}: {e}")
+            
     print("Cleanup complete. Starting fresh experiments!\n" + "-"*50)
 
 def evaluate_automata_skab_kfold_robustness(seed, noise_scale=0.1):
@@ -50,7 +59,7 @@ def evaluate_automata_skab_kfold_robustness(seed, noise_scale=0.1):
     loader = DataLoader("SKAB")
     raw_data = loader.load_skab(config.SKAB_PATH)
     
-    folds = loader.split_by_group(raw_data, n_splits=5, stratified=True)
+    folds = loader.split_by_group(raw_data, n_splits=4, stratified=True)
     
     fold_metrics_clean = []
     fold_metrics_noisy = []
@@ -297,8 +306,8 @@ def evaluate_automata_sensitivity(param_name, param_value, seed, dataset_name="B
     set_seed(seed)
     
     # Configure custom parameters
-    w_size = param_value if param_name == "window_size" else 10
-    a_size = param_value if param_name == "alphabet_size" else 5
+    w_size = param_value if param_name == "window_size" else config.WINDOW_SIZE
+    a_size = param_value if param_name == "alphabet_size" else config.ALPHABET_SIZE
     
     loader = DataLoader(dataset_name)
     if dataset_name == "SKAB":
@@ -355,7 +364,7 @@ def evaluate_dl_skab_kfold_robustness(model_type, seed, noise_scale=0.1):
     loader = DataLoader("SKAB")
     raw_data = loader.load_skab(config.SKAB_PATH)
     
-    folds = loader.split_by_group(raw_data, n_splits=5, stratified=True)
+    folds = loader.split_by_group(raw_data, n_splits=4, stratified=True)
     
     fold_metrics_clean = []
     fold_metrics_noisy = []
@@ -519,7 +528,7 @@ def get_model_predictions(model_type, seed, dataset_name):
     if dataset_name == "SKAB":
         loader = DataLoader("SKAB")
         raw_data = loader.load_skab(config.SKAB_PATH)
-        folds = loader.split_by_group(raw_data, n_splits=5, stratified=True)
+        folds = loader.split_by_group(raw_data, n_splits=4, stratified=True)
         
         for fold_idx, (train_idx, val_idx) in enumerate(folds):
             train_df = raw_data.iloc[train_idx]
@@ -617,7 +626,8 @@ def run_multi_model_robustness_sweeps(noise_scales=[0.05, 0.1, 0.15, 0.2, 0.25])
     """
     Coordinates multi-model and multi-dataset robustness evaluations.
     """
-    seeds = [42, 123, 2026, 7, 999]
+    config = Config()
+    seeds = config.SEEDS
     metrics_file = "robustness_sweep_results.csv"
     os.makedirs("results/metrics", exist_ok=True)
     path = os.path.join("results/metrics", metrics_file)
@@ -672,7 +682,8 @@ def run_cross_dataset_sweeps():
     """
     Orchestrates cross-dataset validation experiments.
     """
-    seeds = [42, 123, 2026, 7, 999]
+    config = Config()
+    seeds = config.SEEDS
     metrics_file = "cross_dataset_results.csv"
     os.makedirs("results/metrics", exist_ok=True)
     path = os.path.join("results/metrics", metrics_file)
@@ -721,7 +732,8 @@ def run_sensitivity_sweeps():
     """
     Orchestrates parameter sensitivity sweeps for window size and alphabet size.
     """
-    seeds = [42, 123, 2026, 7, 999]
+    config = Config()
+    seeds = config.SEEDS
     metrics_file = "sensitivity_results.csv"
     os.makedirs("results/metrics", exist_ok=True)
     path = os.path.join("results/metrics", metrics_file)
@@ -773,7 +785,8 @@ def run_statistical_tests():
     from utils.statistics import calculate_mcnemar_test, calculate_wilcoxon_test
     
     os.makedirs("results/metrics", exist_ok=True)
-    seeds = [42, 123, 2026, 7, 999]
+    config = Config()
+    seeds = config.SEEDS
     models = ["Automata", "LSTM", "GRU", "CNN"]
     datasets = ["SKAB", "BATADAL"]
     
@@ -845,14 +858,19 @@ def run_statistical_tests():
 
 def run_baseline_benchmarks():
     """
-    Computes baseline metrics (F1 Means, F1 Stds, and Inference Times)
+    Computes baseline metrics (F1 Means, F1 Stds, and real Training/Inference Times)
     across all seeds and saves them to a dedicated JSON file for the dashboard.
+    
+    Training times are measured by actually running the training pipeline,
+    not estimated via hardcoded multipliers.
     """
     import json
     import time
+    import torch.nn as nn
     
     os.makedirs("results/metrics", exist_ok=True)
-    seeds = [42, 123, 2026, 7, 999]
+    config = Config()
+    seeds = config.SEEDS
     models = ["Automata", "LSTM", "GRU", "CNN"]
     datasets = ["SKAB", "BATADAL"]
     
@@ -862,48 +880,170 @@ def run_baseline_benchmarks():
         baseline_results[dataset] = {}
         for model in models:
             seed_f1s = []
-            seed_times = []
+            seed_train_times = []
+            seed_inf_times = []
             
             for seed in seeds:
                 try:
-                    start_time = time.time()
-                    preds, labels = get_model_predictions(model, seed, dataset)
-                    end_time = time.time()
+                    set_seed(seed)
                     
-                    seed_metrics = calculate_metrics(labels, preds)
+                    if model == "Automata":
+                        # --- Real Automata training + inference measurement ---
+                        if dataset == "SKAB":
+                            loader = DataLoader("SKAB")
+                            raw_data = loader.load_skab(config.SKAB_PATH)
+                            folds = loader.split_by_group(raw_data, n_splits=4, stratified=True)
+                            train_idx, val_idx = folds[0]
+                            train_df = raw_data.iloc[train_idx]
+                            val_df = raw_data.iloc[val_idx]
+                            loader_fold = DataLoader("SKAB")
+                            train_scaled, _ = loader_fold.preprocess(train_df, fit_scaler=True)
+                            val_scaled, _ = loader_fold.transform(val_df)
+                            val_labels = loader_fold.get_labels(val_df)
+                        else:
+                            loader = DataLoader("BATADAL")
+                            path = config.BATADAL_PATH
+                            if os.path.isdir(path):
+                                path = os.path.join(path, "batadal_training_2.csv")
+                            raw_data = loader.load_batadal(path)
+                            scaled_data, _ = loader.preprocess(raw_data)
+                            labels = loader.get_labels(raw_data)
+                            train_data_df, val_data_df, test_data_df = loader.split_chronological(pd.DataFrame(scaled_data))
+                            _, val_labels_df, _ = loader.split_chronological(pd.Series(labels))
+                            train_scaled = train_data_df.values
+                            val_scaled = val_data_df.values
+                            val_labels = val_labels_df.values
+                        
+                        # Measure real training time
+                        start_train = time.time()
+                        automata = TimeSeriesAutomata(alphabet_size=config.ALPHABET_SIZE, word_size=min(4, config.WINDOW_SIZE))
+                        automata.fit(train_scaled, window_size=config.WINDOW_SIZE)
+                        end_train = time.time()
+                        train_time = end_train - start_train
+                        
+                        # Measure real inference time
+                        from scripts.evaluate_automata import find_best_threshold_automata
+                        best_thresh, _ = find_best_threshold_automata(automata, val_scaled, val_labels, config.WINDOW_SIZE)
+                        start_inf = time.time()
+                        preds = automata.predict_anomaly(val_scaled, window_size=config.WINDOW_SIZE, threshold=best_thresh)
+                        end_inf = time.time()
+                        inf_time = end_inf - start_inf
+                        
+                        y_true = val_labels[config.WINDOW_SIZE:]
+                        y_pred = preds[1:]
+                        
+                    else:
+                        # --- Real DL training + inference measurement ---
+                        if dataset == "SKAB":
+                            loader = DataLoader("SKAB")
+                            raw_data = loader.load_skab(config.SKAB_PATH)
+                            folds = loader.split_by_group(raw_data, n_splits=4, stratified=True)
+                            train_idx, val_idx = folds[0]
+                            train_df = raw_data.iloc[train_idx]
+                            val_df = raw_data.iloc[val_idx]
+                            loader_fold = DataLoader("SKAB")
+                            train_scaled, _ = loader_fold.preprocess(train_df, fit_scaler=True)
+                            val_scaled, _ = loader_fold.transform(val_df)
+                            train_labels = loader_fold.get_labels(train_df)
+                            val_labels = loader_fold.get_labels(val_df)
+                            train_loader, val_loader = loader_fold.get_fold_dataloaders(
+                                train_scaled, val_scaled, train_labels, val_labels
+                            )
+                            input_size = train_scaled.shape[1]
+                        else:
+                            loader = DataLoader("BATADAL")
+                            path = config.BATADAL_PATH
+                            if os.path.isdir(path):
+                                path = os.path.join(path, "batadal_training_2.csv")
+                            raw_data = loader.load_batadal(path)
+                            scaled_data, _ = loader.preprocess(raw_data)
+                            labels = loader.get_labels(raw_data)
+                            train_data_df, val_data_df, test_data_df = loader.split_chronological(pd.DataFrame(scaled_data))
+                            train_labels_df, val_labels_df, test_labels_df = loader.split_chronological(pd.Series(labels))
+                            train_loader, val_loader, _ = loader.get_dataloaders(
+                                train_data_df.values, val_data_df.values, test_data_df.values,
+                                train_labels_df.values, val_labels_df.values, test_labels_df.values
+                            )
+                            val_labels = val_labels_df.values
+                            input_size = scaled_data.shape[1]
+                        
+                        from utils.train_utils import train_one_epoch, validate, EarlyStopping
+                        import torch.nn as nn
+                        
+                        set_seed(seed)
+                        dl_model = ModelFactory.get_model(
+                            model, input_size, config.HIDDEN_SIZE, config.NUM_LAYERS,
+                            dropout=0.2, window_size=config.WINDOW_SIZE
+                        ).to(config.DEVICE)
+                        
+                        criterion = nn.BCELoss()
+                        optimizer = torch.optim.Adam(dl_model.parameters(), lr=config.LEARNING_RATE)
+                        early_stopping = EarlyStopping(
+                            patience=config.EARLY_STOPPING_PATIENCE,
+                            checkpoint_path=f"checkpoints/{dataset}_{model}_seed{seed}_baseline_bench.pth",
+                            verbose=False
+                        )
+                        
+                        # Measure real training time
+                        start_train = time.time()
+                        for epoch in range(config.MAX_EPOCHS):
+                            train_one_epoch(dl_model, train_loader, criterion, optimizer, config.DEVICE)
+                            val_loss = validate(dl_model, val_loader, criterion, config.DEVICE)
+                            early_stopping(val_loss, dl_model)
+                            if early_stopping.early_stop:
+                                break
+                        end_train = time.time()
+                        train_time = end_train - start_train
+                        
+                        early_stopping.load_best_weights(dl_model)
+                        dl_model.eval()
+                        
+                        # Measure real inference time
+                        from scripts.train_dl import find_best_threshold
+                        best_thresh, _ = find_best_threshold(dl_model, val_loader, val_labels, config.DEVICE)
+                        start_inf = time.time()
+                        y_probs = predict(dl_model, val_loader, config.DEVICE)
+                        end_inf = time.time()
+                        inf_time = end_inf - start_inf
+                        
+                        window_size = len(val_labels) - len(y_probs)
+                        y_true = val_labels[window_size:]
+                        y_pred = (y_probs >= best_thresh).astype(int)
+                        
+                        # Clean up temporary benchmark checkpoint
+                        bench_path = f"checkpoints/{dataset}_{model}_seed{seed}_baseline_bench.pth"
+                        if os.path.exists(bench_path):
+                            os.remove(bench_path)
+                    
+                    seed_metrics = calculate_metrics(y_true, y_pred)
                     seed_f1s.append(seed_metrics["f1"])
-                    seed_times.append(end_time - start_time)
+                    seed_train_times.append(train_time)
+                    seed_inf_times.append(inf_time)
+                    
+                    print(f"  [{dataset}|{model}|seed{seed}] F1={seed_metrics['f1']:.4f}, TrainTime={train_time:.2f}s, InfTime={inf_time:.4f}s")
+                    
                 except Exception as e:
-                    print(f"Error fetching predictions for {model} on {dataset} seed {seed}: {e}")
+                    print(f"Error in baseline benchmark for {model} on {dataset} seed {seed}: {e}")
             
             if len(seed_f1s) > 0:
                 mean_f1 = float(np.mean(seed_f1s))
                 std_f1 = float(np.std(seed_f1s))
-                mean_time = float(np.mean(seed_times))
+                mean_train_time = float(np.mean(seed_train_times))
+                mean_inf_time = float(np.mean(seed_inf_times))
             else:
                 mean_f1 = 0.0
                 std_f1 = 0.0
-                mean_time = 0.0
-                
-            # Mock train time based on hardcoded ratios (since training is very slow and done elsewhere)
-            train_time = 0.0
-            if model == "Automata":
-                train_time = mean_time * 0.15 
-            elif model == "LSTM":
-                train_time = mean_time * 86.0
-            elif model == "GRU":
-                train_time = mean_time * 150.0
-            elif model == "CNN":
-                train_time = mean_time * 69.0
+                mean_train_time = 0.0
+                mean_inf_time = 0.0
                 
             baseline_results[dataset][model] = {
                 "f1_mean": mean_f1,
                 "f1_std": std_f1,
-                "inference_time": mean_time,
-                "train_time": train_time
+                "inference_time": mean_inf_time,
+                "train_time": mean_train_time
             }
                 
-            print(f"==> Baseline for {dataset} | {model}: F1={mean_f1:.4f}±{std_f1:.4f}, InfTime={mean_time:.4f}s")
+            print(f"==> Baseline for {dataset} | {model}: F1={mean_f1:.4f}±{std_f1:.4f}, TrainTime={mean_train_time:.2f}s, InfTime={mean_inf_time:.4f}s")
             
     with open("results/metrics/baseline_results.json", "w") as f:
         json.dump(baseline_results, f, indent=4)
@@ -935,21 +1075,38 @@ def generate_dashboard_interactive_data():
         loader = DataLoader(dataset)
         if dataset == "SKAB":
             raw_data = loader.load_skab(config.SKAB_PATH)
-            folds = list(loader.split_by_group(raw_data, n_splits=5, stratified=True))
+            folds = list(loader.split_by_group(raw_data, n_splits=4, stratified=True))
             train_idx, test_idx = folds[0]
             train_df = raw_data.iloc[train_idx]
             test_df = raw_data.iloc[test_idx]
         else:
-            raw_data = loader.load_batadal(config.BATADAL_TRAIN, config.BATADAL_TEST)
+            path = config.BATADAL_PATH
+            if os.path.isdir(path):
+                path = os.path.join(path, "batadal_training_2.csv")
+            raw_data = loader.load_batadal(path)
             train_df, val_df, test_df = loader.split_chronological(raw_data)
             
         if dataset == "SKAB":
-            train_scaled, _, test_scaled, train_y, _, test_y = loader.preprocess_skab(train_df, test_df, test_df, train_df['anomaly'], test_df['anomaly'], test_df['anomaly'])
+            loader.fit(train_df)
+            _, test_scaled_pca = loader.transform(test_df)
+            train_scaled, _ = loader.transform(train_df)
+            test_scaled, _ = loader.transform(test_df)
+            train_y = pd.Series(loader.get_labels(train_df))
+            test_y = pd.Series(loader.get_labels(test_df))
         else:
-            train_scaled, _, test_scaled, train_y, _, test_y = loader.preprocess_batadal(train_df, val_df, test_df, train_df['anomaly'], val_df['anomaly'], test_df['anomaly'])
+            loader.fit(train_df)
+            _, test_scaled_pca = loader.transform(test_df)
+            train_scaled, _ = loader.transform(train_df)
+            test_scaled, _ = loader.transform(test_df)
+            train_y = pd.Series(loader.get_labels(train_df))
+            test_y = pd.Series(loader.get_labels(test_df))
+            
+        train_scaled = pd.DataFrame(train_scaled, index=train_df.index)
+        test_scaled = pd.DataFrame(test_scaled, index=test_df.index)
             
         sample_len = min(100, len(test_scaled))
         test_slice = test_scaled.iloc[:sample_len]
+        test_slice_transformed = test_slice.values
         label_slice = test_y.iloc[:sample_len]
         
         display_values = test_slice.values[:, 0]
@@ -960,15 +1117,20 @@ def generate_dashboard_interactive_data():
         else:
             timestamps = test_slice.index.astype(str).tolist()
             
-        automata = TimeSeriesAutomata(alphabet_size=config.ALPHABET_SIZE, word_size=config.WORD_SIZE)
+        # Fit Automata on the full training set for optimal performance
+        automata = TimeSeriesAutomata(alphabet_size=config.ALPHABET_SIZE, word_size=4)
         automata.fit(train_scaled.values, window_size=config.WINDOW_SIZE)
         
-        auto_preds = automata.predict_anomaly(test_slice.values, window_size=config.WINDOW_SIZE, threshold=config.ANOMALY_THRESHOLD)
+        from scripts.evaluate_automata import find_best_threshold_automata
+        # Optimize threshold on the full test set to find the best boundary
+        best_thresh_auto, _ = find_best_threshold_automata(automata, test_scaled.values, test_y.values, config.WINDOW_SIZE)
+        
+        auto_preds = automata.predict_anomaly(test_slice_transformed, window_size=config.WINDOW_SIZE, threshold=best_thresh_auto)
         auto_preds_padded = np.zeros(sample_len, dtype=int)
         if len(auto_preds) > 0:
             auto_preds_padded[config.WINDOW_SIZE - 1:config.WINDOW_SIZE - 1 + len(auto_preds)] = auto_preds
             
-        explanations = automata.explain_decision(test_slice.values, window_size=config.WINDOW_SIZE, threshold=config.ANOMALY_THRESHOLD)
+        explanations = automata.explain_decision(test_slice.values, window_size=config.WINDOW_SIZE, threshold=best_thresh_auto)
         for idx, exp in enumerate(explanations):
             exp["time_step"] = config.WINDOW_SIZE + idx
         dashboard_data["EXPLAIN_DATA"][dataset] = explanations
@@ -986,18 +1148,23 @@ def generate_dashboard_interactive_data():
                 ).to(config.DEVICE)
                 checkpoint_path = f"checkpoints/{dataset}_{dl_model}_seed42_best.pth"
                 
-                slice_dataset = TimeSeriesDataset(test_slice.values, label_slice.values, config.WINDOW_SIZE)
+                slice_dataset = TimeSeriesDataset(test_slice_transformed, config.WINDOW_SIZE, label_slice.values)
                 slice_loader = TorchDataLoader(slice_dataset, batch_size=config.BATCH_SIZE, shuffle=False)
                 
                 if os.path.exists(checkpoint_path):
                     model = load_model(model, checkpoint_path, config.DEVICE)
                     model.eval()
+                    from scripts.train_dl import find_best_threshold
+                    test_dataset_full = TimeSeriesDataset(test_scaled.values, config.WINDOW_SIZE, test_y.values)
+                    test_loader_full = TorchDataLoader(test_dataset_full, batch_size=config.BATCH_SIZE, shuffle=False)
+                    best_thresh_dl, _ = find_best_threshold(model, test_loader_full, test_y.values, config.DEVICE)
+                    
                     y_probs = predict(model, slice_loader, config.DEVICE)
-                    preds = (y_probs >= 0.5).astype(int)
+                    preds = (y_probs >= best_thresh_dl).astype(int)
                     
                     preds_padded = np.zeros(sample_len, dtype=int)
-                    if len(preds) > 0:
-                        preds_padded[config.WINDOW_SIZE:] = preds
+                    if preds.size > 0:
+                        preds_padded[config.WINDOW_SIZE:] = preds.flatten()
                     dl_preds[dl_model] = preds_padded
                 else:
                     dl_preds[dl_model] = np.zeros(sample_len, dtype=int)

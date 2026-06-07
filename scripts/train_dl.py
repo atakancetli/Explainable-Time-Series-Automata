@@ -55,7 +55,7 @@ def run_training_skab_kfold(model_type, seed):
     raw_data = loader.load_skab(config.SKAB_PATH)
     
     # 5-fold StratifiedGroupKFold splits based on source_file
-    folds = loader.split_by_group(raw_data, n_splits=5, stratified=True)
+    folds = loader.split_by_group(raw_data, n_splits=4, stratified=True)
     
     fold_metrics = []
     fold_train_times = []
@@ -235,9 +235,9 @@ def run_training_batadal_chronological(model_type, seed):
     
     # Predict and compute metrics
     model.eval()
-    y_probs = predict(model, val_loader, config.DEVICE)
-    window_size = len(val_labels) - len(y_probs)
-    y_true = val_labels.values[window_size:]
+    y_probs = predict(model, test_loader, config.DEVICE)
+    window_size = len(test_labels) - len(y_probs)
+    y_true = test_labels.values[window_size:]
     y_pred = (y_probs >= best_thresh).astype(int)
     
     metrics = calculate_metrics(y_true, y_pred)
@@ -260,7 +260,8 @@ def run_training_batadal_chronological(model_type, seed):
     return results
 
 if __name__ == "__main__":
-    seeds = [42, 123, 2026, 7, 999]
+    config = Config()
+    seeds = config.SEEDS
     for dataset in ["SKAB", "BATADAL"]:
         for m in ["LSTM", "GRU", "CNN"]:
             for seed in seeds:

@@ -11,8 +11,9 @@ class Config:
     VAL_RATIO = 0.2
     TEST_RATIO = 0.2
     
-    WINDOW_SIZE = 10
-    ALPHABET_SIZE = 5
+    WINDOW_SIZE = 4
+    WORD_SIZE = 4
+    ALPHABET_SIZE = 3
     
     SKAB_PATH = "data/skab"
     BATADAL_PATH = "data/batadal"

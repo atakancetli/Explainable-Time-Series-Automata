@@ -24,7 +24,7 @@ def find_best_threshold_automata(model, val_series, val_labels, window_size):
         active_sequence = states[t - 1 : min(t + 2, num_windows)]
         probs[t] = model.calculate_path_probability(active_sequence)
         
-    best_thresh = 0.01
+    best_thresh = 1e-5
     best_f1 = 0.0
     
     # Sweep threshold log-space and linear range
@@ -57,7 +57,7 @@ def run_automata_skab_kfold(seed):
     raw_data = loader.load_skab(config.SKAB_PATH)
     
     # 5-fold StratifiedGroupKFold splits based on source_file
-    folds = loader.split_by_group(raw_data, n_splits=5, stratified=True)
+    folds = loader.split_by_group(raw_data, n_splits=4, stratified=True)
     
     fold_metrics = []
     fold_train_times = []
@@ -92,7 +92,7 @@ def run_automata_skab_kfold(seed):
         
         # Evaluate validation inference & record inference time
         start_inf = time.time()
-        y_pred_all = automata.predict_anomaly(val_scaled, window_size=config.WINDOW_SIZE, threshold=best_thresh)
+        y_pred_all = automata.predict_anomaly(val_scaled, window_size=config.WINDOW_SIZE, threshold=best_thresh if best_thresh is not None else 1e-5)
         end_inf = time.time()
         inf_time = end_inf - start_inf
         fold_inf_times.append(inf_time)
@@ -193,7 +193,8 @@ def run_automata_batadal_chronological(seed):
     return results
 
 if __name__ == "__main__":
-    seeds = [42, 123, 2026, 7, 999]
+    config = Config()
+    seeds = config.SEEDS
     metrics_file = "automata_metrics.csv"
     
     # Remove previous automata metrics file if it exists to have clean results

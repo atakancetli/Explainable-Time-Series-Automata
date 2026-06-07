@@ -290,6 +290,15 @@ class DataLoader:
         test = data.iloc[val_end:]
         
         self.logger.info(f"Chronological split complete: Train={train.shape[0]} ({self.config.TRAIN_RATIO*100:.0f}%), Val={val.shape[0]} ({self.config.VAL_RATIO*100:.0f}%), Test={test.shape[0]} ({self.config.TEST_RATIO*100:.0f}%)")
+        
+        # Log class distribution for each split
+        for split_name, split_data in [("Train", train), ("Val", val), ("Test", test)]:
+            if isinstance(split_data, pd.DataFrame) and 'anomaly' in split_data.columns:
+                anomaly_count = int(split_data['anomaly'].sum())
+                total = len(split_data)
+                ratio = anomaly_count / total * 100 if total > 0 else 0
+                self.logger.info(f"  {split_name} class distribution: {anomaly_count}/{total} anomaly ({ratio:.1f}%), {total - anomaly_count}/{total} normal ({100 - ratio:.1f}%)")
+        
         return train, val, test
 
 
@@ -317,7 +326,7 @@ class DataLoader:
         return train_loader, val_loader
 
 
-    def split_by_group(self, data, n_splits=5, stratified=True):
+    def split_by_group(self, data, n_splits=4, stratified=True):
         num_groups = data['source_file'].nunique()
         actual_splits = min(n_splits, num_groups)
         if actual_splits < n_splits:
@@ -343,5 +352,17 @@ class DataLoader:
             splits.append((train_idx, test_idx))
             
         self.logger.info(f"Data split completed. Generated {len(splits)} folds.")
+        
+        # Log class distribution per fold
+        if 'anomaly' in data.columns:
+            for fold_idx, (train_idx, test_idx) in enumerate(splits):
+                train_anomaly = int(data.iloc[train_idx]['anomaly'].sum())
+                test_anomaly = int(data.iloc[test_idx]['anomaly'].sum())
+                train_total = len(train_idx)
+                test_total = len(test_idx)
+                train_ratio = train_anomaly / train_total * 100 if train_total > 0 else 0
+                test_ratio = test_anomaly / test_total * 100 if test_total > 0 else 0
+                self.logger.info(f"  Fold {fold_idx+1}: Train={train_anomaly}/{train_total} anomaly ({train_ratio:.1f}%) | Val={test_anomaly}/{test_total} anomaly ({test_ratio:.1f}%)")
+        
         return splits
 

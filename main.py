@@ -41,7 +41,7 @@ def create_dummy_datasets(config):
     os.makedirs(config.BATADAL_PATH, exist_ok=True)
     batadal_file = os.path.join(config.BATADAL_PATH, "batadal_training_2.csv")
     if not os.path.exists(batadal_file):
-        dates = pd.date_range(start="2026-05-20 00:00:00", periods=100, freq="1h")
+        dates = pd.date_range(start="2026-05-20 00:00:00", periods=100, freq="h")
         df = pd.DataFrame(np.random.randn(100, 3), columns=["Pressure1", "Flow2", "Level3"])
         df['DATETIME'] = dates
         df['ATT_FLAG'] = np.random.choice([0, 1], size=100, p=[0.85, 0.15])

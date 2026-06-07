@@ -299,6 +299,13 @@
                         <h3>Simüle Edilen F1-Score</h3>
                         <div class="f1-gauge">
                             <svg viewBox="0 0 100 50" class="gauge-svg">
+                                <defs>
+                                    <linearGradient id="gauge-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" stop-color="#f43f5e" />
+                                        <stop offset="50%" stop-color="#f59e0b" />
+                                        <stop offset="100%" stop-color="#10b981" />
+                                    </linearGradient>
+                                </defs>
                                 <path class="gauge-bg" d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke-width="8"></path>
                                 <path class="gauge-fill" id="gauge-fill-arc" d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke-width="8" stroke-dasharray="125" stroke-dashoffset="125"></path>
                             </svg>
@@ -311,8 +318,8 @@
         </main>
     </div>
 
-    <!-- Inject compiled data store -->
-    <script src="data_store.js"></script>
-    <script src="app.js"></script>
+    <!-- Inject compiled data store with Cache Buster -->
+    <script>document.write('<script src="data_store.js?t=' + new Date().getTime() + '"></' + 'script>');</script>
+    <script>document.write('<script src="app.js?t=' + new Date().getTime() + '"></' + 'script>');</script>
 </body>
 </html>

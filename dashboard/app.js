@@ -172,7 +172,7 @@ function renderChart(datasetName) {
                 
                 // Switch to Explainability tab dynamically to showcase detail
                 document.querySelector('[data-tab="explainability"]').click();
-                loadLocalExplanation(datasetName, clickedItem.anomaly === 1 ? 0 : 1);
+                loadLocalExplanation(datasetName, elementIndex);
             }
         },
         scales: {

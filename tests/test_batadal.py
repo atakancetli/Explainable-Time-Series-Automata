@@ -11,7 +11,7 @@ class TestBATADALChronologicalSweeps(unittest.TestCase):
     def setUp(self):
         # Create a mock BATADAL dataframe for split tests
         data_list = []
-        date_range = pd.date_range(start="2026-05-01", periods=100, freq="H")
+        date_range = pd.date_range(start="2026-05-01", periods=100, freq="h")
         self.mock_data = pd.DataFrame({
             "datetime": date_range,
             "sensor1": np.random.randn(100),

@@ -298,7 +298,7 @@ def get_model_scores(model_type, seed, dataset_name):
     if dataset_name == "SKAB":
         loader = DataLoader("SKAB")
         raw_data = loader.load_skab(config.SKAB_PATH)
-        folds = loader.split_by_group(raw_data, n_splits=5, stratified=True)
+        folds = loader.split_by_group(raw_data, n_splits=4, stratified=True)
         
         for fold_idx, (train_idx, val_idx) in enumerate(folds):
             train_df = raw_data.iloc[train_idx]
@@ -408,7 +408,8 @@ def main():
     from scripts.run_experiments import get_model_predictions
     models = ["Automata", "LSTM", "GRU", "CNN"]
     datasets = ["SKAB", "BATADAL"]
-    seed = 42
+    config = Config()
+    seed = config.SEEDS[0]
     
     # 1. Generate Confusion Matrices and ROC/PR Curves for each dataset
     for dataset in datasets:

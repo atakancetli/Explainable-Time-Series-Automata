@@ -13,7 +13,7 @@ def evaluate_model_skab_kfold(model_type, seed):
     loader = DataLoader("SKAB")
     raw_data = loader.load_skab(config.SKAB_PATH)
     
-    folds = loader.split_by_group(raw_data, n_splits=5, stratified=True)
+    folds = loader.split_by_group(raw_data, n_splits=4, stratified=True)
     
     fold_metrics = []
     
@@ -22,12 +22,13 @@ def evaluate_model_skab_kfold(model_type, seed):
         val_df = raw_data.iloc[val_idx]
         
         loader_fold = DataLoader("SKAB")
-        loader_fold.fit(train_df)
+        train_scaled, _ = loader_fold.preprocess(train_df, fit_scaler=True)
         val_scaled, _ = loader_fold.transform(val_df)
+        train_labels = loader_fold.get_labels(train_df)
         val_labels = loader_fold.get_labels(val_df)
         
         _, val_loader = loader_fold.get_fold_dataloaders(
-            val_scaled, val_scaled, val_labels, val_labels
+            train_scaled, val_scaled, train_labels, val_labels
         )
         
         model = ModelFactory.get_model(
@@ -115,7 +116,8 @@ def evaluate_model_batadal_multi_seed(model_type, seed):
     return metrics
 
 if __name__ == "__main__":
-    seeds = [42, 123, 2026, 7, 999]
+    config = Config()
+    seeds = config.SEEDS
     metrics_file = "dl_test_metrics.csv"
     
     # Remove previous test metrics file if it exists to have clean results

@@ -28,16 +28,27 @@ def inject_gaussian_noise(data, scale=0.1):
         perturbed = data.copy()
         numeric_cols = perturbed.select_dtypes(include=[np.number]).columns
         noise = np.random.normal(loc=0.0, scale=scale, size=perturbed[numeric_cols].shape)
+        orig_std = perturbed[numeric_cols].values.std()
         perturbed[numeric_cols] += noise
+        new_std = perturbed[numeric_cols].values.std()
+        print(f"[NoiseVerify] DataFrame | scale={scale} | orig_std={orig_std:.6f} | new_std={new_std:.6f} | delta={abs(new_std - orig_std):.6f}")
         return perturbed
     elif isinstance(data, np.ndarray):
         noise = np.random.normal(loc=0.0, scale=scale, size=data.shape)
-        return data + noise
+        orig_std = data.std()
+        perturbed = data + noise
+        new_std = perturbed.std()
+        print(f"[NoiseVerify] ndarray | scale={scale} | orig_std={orig_std:.6f} | new_std={new_std:.6f} | delta={abs(new_std - orig_std):.6f}")
+        return perturbed
     else:
         # If list/tuple, convert to np.ndarray
         arr = np.array(data, dtype=np.float32)
         noise = np.random.normal(loc=0.0, scale=scale, size=arr.shape)
-        return arr + noise
+        orig_std = arr.std()
+        perturbed = arr + noise
+        new_std = perturbed.std()
+        print(f"[NoiseVerify] other | scale={scale} | orig_std={orig_std:.6f} | new_std={new_std:.6f} | delta={abs(new_std - orig_std):.6f}")
+        return perturbed
 
 def calculate_unseen_metrics(automata, train_data, test_data, train_labels, test_labels, window_size=10, threshold=0.01):
     """
