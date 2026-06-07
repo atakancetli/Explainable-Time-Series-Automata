@@ -182,19 +182,17 @@ pip install -r requirements.txt
 ```
 
 **2. Tüm Deneyleri ve Modelleri Eğitin:**
-*(Deney sonuçları CSV ve JSON olarak kaydedilir).*
 ```bash
-PYTHONPATH=. python scripts/run_experiments.py
+python -m scripts.run_experiments
 ```
 
 **3. Görselleri (Grafikleri) Çizin:**
 ```bash
-PYTHONPATH=. python scripts/plot_generator.py
+python -m scripts.plot_generator
 ```
 
-**4. Etkileşimli Sunum Panelini (Dashboard) Açın:**
-*(Hocaya sunum yapılacak yer).*
+**4. Etkileşimli Sunum Panelini (Dashboard) Derleyin:**
 ```bash
-python scripts/compile_dashboard_data.py
-# Ardından klasördeki dashboard/index.html dosyasını Chrome/Edge ile açın.
+python -m scripts.compile_dashboard_data
 ```
+*Not: Veriler derlendikten sonra `dashboard/index.html` dosyasını herhangi bir web tarayıcısı (Chrome/Edge) ile açarak paneli görüntüleyebilirsiniz.*
